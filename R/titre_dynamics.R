@@ -173,3 +173,23 @@ simulate_antibody_titres <- function(n_years, A0, par_rho,
 
   A
 }
+
+#' Linear antibody titre dynamics with lower bound
+#'
+#' @param par_alpha A scalar indicating the permanent rise.
+#' @param par_beta A scalar indicating the temporary rise.
+#' @param par_delta A scalar indicating the decay rate.
+#' @param time Numeric vector. Time points at which to evaluate titres.
+#'
+#' @returns Numeric vector of titres at each time point.
+#' @export
+#'
+#' @examples
+#' titre_decay_floor(par_alpha = 6,
+#'                   par_beta  = 2,
+#'                   par_delta = 0.003,
+#'                   time      = seq(0, 365 * 3))
+titre_decay_floor <- function(par_alpha, par_beta, par_delta, time)
+{
+  pmax((par_alpha + par_beta) - par_delta * time, par_alpha)
+}
