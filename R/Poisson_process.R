@@ -19,9 +19,10 @@
 #'                          max_inf    = 4)
 simulate_infection_times <- function(lambda, stop_time, min_gap, max_inf)
 {
-  time_to_first_infection      <- rexp(1, rate = lambda)
+  time_to_first_infection      <- stats::rexp(1, rate = lambda)
 
-  time_between_infections_rest <- min_gap + rexp(max_inf - 1, rate = lambda)
+  time_between_infections_rest <- min_gap + stats::rexp(max_inf - 1,
+                                                        rate = lambda)
 
   time_between_infections <- c(time_to_first_infection,
                                time_between_infections_rest)

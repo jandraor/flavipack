@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(immunobuckets)
+library(flavipack)
 
-test_check("immunobuckets")
+test_check("flavipack")
