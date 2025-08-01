@@ -6,7 +6,6 @@
 \usage{
 simulate_titre_trajectory(
   sampling_times,
-  serostatus,
   treatment_group,
   subject_id,
   meas_sd,
@@ -15,10 +14,8 @@ simulate_titre_trajectory(
 )
 }
 \arguments{
-\item{sampling_times}{Numeric vector of times at which titres are sampled.}
-
-\item{serostatus}{Integer (0 or 1) indicating baseline serostatus at
-enrolment (0 = seronegative, 1 = seropositive).}
+\item{sampling_times}{Numeric vector of sampling times (in days) relative to
+the start of the study.}
 
 \item{treatment_group}{Integer (0 or 1) indicating treatment group.
 (0 = Placebo, 1 = Vaccine).}
@@ -52,10 +49,8 @@ with measurement error and limit of detection.
 \examples{
   subject_id      <- 1
   sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
-  serostatus      <- 0 # Seronegative
   treatment_group <- 0 # Placebo
   simulate_titre_trajectory(sampling_times,
-                            serostatus,
                             treatment_group,
                             subject_id      = subject_id,
                             infection_times = 1047.108)

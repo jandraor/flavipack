@@ -5,9 +5,8 @@
 #' and baseline serostatus. The function applies a rise-and-decay model
 #' with measurement error and limit of detection.
 #'
-#' @param sampling_times Numeric vector of times at which titres are sampled.
-#' @param serostatus Integer (0 or 1) indicating baseline serostatus at
-#'  enrolment (0 = seronegative, 1 = seropositive).
+#' @param sampling_times Numeric vector of sampling times (in days) relative to
+#'  the start of the study.
 #' @param treatment_group Integer (0 or 1) indicating treatment group.
 #'  (0 = Placebo, 1 = Vaccine).
 #' @param subject_id Identifier for the subject (numeric or character).
@@ -31,14 +30,12 @@
 #' @examples
 #'   subject_id      <- 1
 #'   sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
-#'   serostatus      <- 0 # Seronegative
 #'   treatment_group <- 0 # Placebo
 #'   simulate_titre_trajectory(sampling_times,
-#'                             serostatus,
 #'                             treatment_group,
 #'                             subject_id      = subject_id,
 #'                             infection_times = 1047.108)
-simulate_titre_trajectory <- function(sampling_times, serostatus,
+simulate_titre_trajectory <- function(sampling_times,
                                       treatment_group,
                                       subject_id,
                                       meas_sd,
@@ -53,28 +50,24 @@ simulate_titre_trajectory <- function(sampling_times, serostatus,
 
   log_titre_vals <- rep(0, n_samples)
 
+  # 0 corresponds to the date we start tracking the individual.
+  # This can be the enrolment date in a study or the date she became susceptible.
   event_times <- c(0, infection_times)
 
   n_events <- length(event_times)
 
-  # First event corresponds to enrolment
-  for(j in 1:n_events)
-  {
-    if(serostatus == 0 & j == 1) next
+  serostatus <- 0
 
+  for(j in 2:n_events)
+  {
     start_interval <- event_times[[j]]
 
     end_interval <- ifelse(j == n_events,
-                           sampling_times[[n_samples]],
+                           sampling_times[[n_samples]] + 1,
                            event_times[[j + 1]])
 
-    lower_bound    <- min(sampling_times[sampling_times > start_interval])
-    upper_bound    <- max(sampling_times[sampling_times <= end_interval])
-
-    if(j == 1) lower_bound <- sampling_times[[1]]
-
-    times_within_interval <- sampling_times[sampling_times >= lower_bound &
-                                                 sampling_times <= upper_bound]
+    times_within_interval <- sampling_times[sampling_times >= start_interval &
+                                                 sampling_times <= end_interval]
 
     # We add `end_interval` to the estimate the last titre right before the next
     #  event
@@ -127,4 +120,48 @@ measurement_model <- function(true_titre, measurement_error, LOD)
   obs_titre <- ifelse(obs_titre < LOD, 0, obs_titre)
 
   obs_titre
+}
+
+
+#' Simulate antibody titre trajectories from birth
+#'
+#'#' @inheritParams simulate_titre_trajectory
+#' @param inf_times_sbs Numeric vector of infection times (in days) relative to
+#'  day the individual became susceptible.
+#' @param age Numeric. Age of the individual at the time of the first sample
+#'  (in years).
+#'
+#' @returns A data frame containing simulated titre values across the specified
+#'  sampling times.
+#' @export
+#'
+#' @examples
+#' simulate_titres_seropositive(
+#'   inf_times_sbs   = c(1059.646, 2743.543, 4152.091),
+#'   sampling_times  = c(41, 74, 122, 157, 290, 468, 787, 1192, 1553),
+#'   age             = 10,
+#'   subject_id      = 3,
+#'   treatment_group = 0)
+simulate_titres_seropositive <- function(inf_times_sbs, sampling_times, age,
+                                        subject_id, treatment_group) {
+  # We assume that the first blood drawn was taken on the individual's birthday
+  sampling_times_rel_to_last_birthday <- sampling_times - min(sampling_times)
+
+  # Duration of protection of maternal antibodies
+  d_mAB <- 1
+
+  # Sampling times relative to the day the individual became susceptible
+  sampling_times_sbs <- sampling_times_rel_to_last_birthday  +
+    365 * (age - d_mAB)
+
+  sim_titre_df <- simulate_titre_trajectory(
+    sampling_times  = sampling_times_sbs,
+    treatment_group = treatment_group,
+    subject_id      = subject_id,
+    infection_times = inf_times_sbs,
+    meas_sd         = 0.3)
+
+  sim_titre_df$time <- sampling_times
+
+  sim_titre_df
 }
