@@ -9,22 +9,34 @@ simulate_titres_seropositive(
   sampling_times,
   age,
   subject_id,
-  treatment_group
+  treatment_group,
+  meas_sd
 )
 }
 \arguments{
 \item{inf_times_sbs}{Numeric vector of infection times (in days) relative to
 day the individual became susceptible.}
 
+\item{sampling_times}{Numeric vector of sampling times (in days) relative to
+the start of the study.}
+
 \item{age}{Numeric. Age of the individual at the time of the first sample
 (in years).}
+
+\item{subject_id}{Identifier for the subject (numeric or character).}
+
+\item{treatment_group}{Integer (0 or 1) indicating treatment group.
+(0 = Placebo, 1 = Vaccine).}
+
+\item{meas_sd}{A non-negative real value that corresponds to the standard
+deviation of a normal measurement model of log titres.}
 }
 \value{
 A data frame containing simulated titre values across the specified
  sampling times.
 }
 \description{
-#' @inheritParams simulate_titre_trajectory
+Simulate antibody titre trajectories from birth
 }
 \examples{
 simulate_titres_seropositive(
@@ -32,5 +44,6 @@ simulate_titres_seropositive(
   sampling_times  = c(41, 74, 122, 157, 290, 468, 787, 1192, 1553),
   age             = 10,
   subject_id      = 3,
-  treatment_group = 0)
+  treatment_group = 0,
+  meas_sd         = 0)
 }

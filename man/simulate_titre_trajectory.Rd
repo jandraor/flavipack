@@ -47,11 +47,10 @@ and baseline serostatus. The function applies a rise-and-decay model
 with measurement error and limit of detection.
 }
 \examples{
-  subject_id      <- 1
   sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
-  treatment_group <- 0 # Placebo
-  simulate_titre_trajectory(sampling_times,
-                            treatment_group,
-                            subject_id      = subject_id,
-                            infection_times = 1047.108)
+simulate_titre_trajectory(sampling_times   = sampling_times,
+                         treatment_group  = 0, # Placebo
+                         subject_id       = 1,
+                         infection_times  = c(300, 900),
+                         meas_sd          = 0.3)
 }

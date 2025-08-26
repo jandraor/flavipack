@@ -77,6 +77,29 @@ test_that("simulate_titre_trajectory() works for reconstructing titres since
   expect_equal("meas" %in% colnames(actual), TRUE)
 })
 
+
+
+test_that("simulate_titre_trajectory() handles no infections",
+{
+  sampling_times <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
+
+  actual <- simulate_titre_trajectory(
+    sampling_times  = sampling_times ,
+    treatment_group = 0,
+    subject_id      = 1,
+    infection_times = numeric(0),
+    meas_sd         = 0.3)
+
+  expected <- data.frame(subject_id = 1,
+                         time       = sampling_times,
+                         true       = 0,
+                         meas       = 0)
+
+  expect_equal(actual, expected)
+})
+
+#simulate_titres_seropositive---------------------------------------------------
+
 test_that("simulate_titres_seropositive() works",
 {
   age <- 10
@@ -96,7 +119,8 @@ test_that("simulate_titres_seropositive() works",
                                         sampling_times  = sampling_times,
                                         age             = age,
                                         subject_id      = 3,
-                                        treatment_group = 0)
+                                        treatment_group = 0,
+                                        meas_sd         = 0.3)
 
   first_infection_last_value <- max(8 - 0.003 * (inf_times_sbs[[2]] - inf_times_sbs[[1]]), 6)
 

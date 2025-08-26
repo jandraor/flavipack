@@ -28,13 +28,12 @@
 #' @export
 #'
 #' @examples
-#'   subject_id      <- 1
 #'   sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
-#'   treatment_group <- 0 # Placebo
-#'   simulate_titre_trajectory(sampling_times,
-#'                             treatment_group,
-#'                             subject_id      = subject_id,
-#'                             infection_times = 1047.108)
+#'simulate_titre_trajectory(sampling_times   = sampling_times,
+#'                          treatment_group  = 0, # Placebo
+#'                          subject_id       = 1,
+#'                          infection_times  = c(300, 900),
+#'                          meas_sd          = 0.3)
 simulate_titre_trajectory <- function(sampling_times,
                                       treatment_group,
                                       subject_id,
@@ -58,48 +57,54 @@ simulate_titre_trajectory <- function(sampling_times,
 
   serostatus <- 0
 
-  for(j in 2:n_events)
+  if(length(event_times) > 1)
   {
-    start_interval <- event_times[[j]]
+    for(j in 2:n_events)
+    {
+      start_interval <- event_times[[j]]
 
-    end_interval <- ifelse(j == n_events,
-                           sampling_times[[n_samples]] + 1,
-                           event_times[[j + 1]])
+      end_interval <- ifelse(j == n_events,
+                             sampling_times[[n_samples]] + 1,
+                             event_times[[j + 1]])
 
-    times_within_interval <- sampling_times[sampling_times >= start_interval &
-                                                 sampling_times <= end_interval]
+      times_within_interval <- sampling_times[sampling_times >= start_interval &
+                                                sampling_times <= end_interval]
 
-    # We add `end_interval` to the estimate the last titre right before the next
-    #  event
-    interval_times <- c(times_within_interval, end_interval)
+      # We add `end_interval` to the estimate the last titre right before the next
+      #  event
+      interval_times <- c(times_within_interval, end_interval)
 
-    time_since_event <- interval_times - start_interval
+      time_since_event <- interval_times - start_interval
 
-    interval_idx   <- which(sampling_times %in% times_within_interval)
+      interval_idx   <- which(sampling_times %in% times_within_interval)
 
-    perm_rise <- 6 # Permanent rise
+      perm_rise <- 6 # Permanent rise
 
-    temp_rise_seroneg <- 2 # Temporary rise for seronegative individuals
+      temp_rise_seroneg <- 2 # Temporary rise for seronegative individuals
 
-    decay_rate <- 0.003
+      decay_rate <- 0.003
 
-    delta_seropos <- ifelse(serostatus == 1, last_titre_prev_inf - perm_rise, 0)
+      delta_seropos <- ifelse(serostatus == 1, last_titre_prev_inf - perm_rise, 0)
 
-    temp_rise <- temp_rise_seroneg + delta_seropos
+      temp_rise <- temp_rise_seroneg + delta_seropos
 
-    sim_titres <- titre_decay_floor(par_alpha = perm_rise,
-                                    par_beta  = temp_rise,
-                                    par_delta = decay_rate,
-                                    time      = time_since_event)
+      sim_titres <- titre_decay_floor(par_alpha = perm_rise,
+                                      par_beta  = temp_rise,
+                                      par_delta = decay_rate,
+                                      time      = time_since_event)
 
-    log_titre_vals[interval_idx] <- sim_titres[-length(sim_titres)]
+      log_titre_vals[interval_idx] <- sim_titres[-length(sim_titres)]
 
-    # Last titre of the previous infection
-    last_titre_prev_inf <- sim_titres[length(sim_titres)]
+      # Last titre of the previous infection
+      last_titre_prev_inf <- sim_titres[length(sim_titres)]
 
-    # Any event (vac or inf) will render an individual seropositive
-    serostatus <- 1
+      # Any event (vac or inf) will render an individual seropositive
+      serostatus <- 1
+    }
+
   }
+
+
 
   df$true <- log_titre_vals
 
@@ -125,7 +130,7 @@ measurement_model <- function(true_titre, measurement_error, LOD)
 
 #' Simulate antibody titre trajectories from birth
 #'
-#'#' @inheritParams simulate_titre_trajectory
+#' @inheritParams simulate_titre_trajectory
 #' @param inf_times_sbs Numeric vector of infection times (in days) relative to
 #'  day the individual became susceptible.
 #' @param age Numeric. Age of the individual at the time of the first sample
@@ -141,9 +146,11 @@ measurement_model <- function(true_titre, measurement_error, LOD)
 #'   sampling_times  = c(41, 74, 122, 157, 290, 468, 787, 1192, 1553),
 #'   age             = 10,
 #'   subject_id      = 3,
-#'   treatment_group = 0)
+#'   treatment_group = 0,
+#'   meas_sd         = 0)
 simulate_titres_seropositive <- function(inf_times_sbs, sampling_times, age,
-                                        subject_id, treatment_group) {
+                                        subject_id, treatment_group,
+                                        meas_sd) {
   # We assume that the first blood drawn was taken on the individual's birthday
   sampling_times_rel_to_last_birthday <- sampling_times - min(sampling_times)
 
@@ -159,7 +166,7 @@ simulate_titres_seropositive <- function(inf_times_sbs, sampling_times, age,
     treatment_group = treatment_group,
     subject_id      = subject_id,
     infection_times = inf_times_sbs,
-    meas_sd         = 0.3)
+    meas_sd         = meas_sd)
 
   sim_titre_df$time <- sampling_times
 
