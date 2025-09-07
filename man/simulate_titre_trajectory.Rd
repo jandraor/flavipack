@@ -8,6 +8,8 @@ simulate_titre_trajectory(
   sampling_times,
   treatment_group,
   subject_id,
+  perm_rise,
+  temp_rise,
   meas_sd,
   infection_times = NULL,
   vac_times = NULL
@@ -21,6 +23,11 @@ the start of the study.}
 (0 = Placebo, 1 = Vaccine).}
 
 \item{subject_id}{Identifier for the subject (numeric or character).}
+
+\item{perm_rise}{Numeric scalar. Permanent rise in titre following an infection event.}
+
+\item{temp_rise}{Numeric scalar. Initial temporary rise in titre following
+an infection event in seronegative individuals.}
 
 \item{meas_sd}{A non-negative real value that corresponds to the standard
 deviation of a normal measurement model of log titres.}
@@ -47,10 +54,12 @@ and baseline serostatus. The function applies a rise-and-decay model
 with measurement error and limit of detection.
 }
 \examples{
-  sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
+sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
 simulate_titre_trajectory(sampling_times   = sampling_times,
-                         treatment_group  = 0, # Placebo
-                         subject_id       = 1,
-                         infection_times  = c(300, 900),
-                         meas_sd          = 0.3)
+                          treatment_group  = 0, # Placebo
+                          subject_id       = 1,
+                          infection_times  = c(300, 900),
+                          perm_rise        = 6,
+                          temp_rise        = 2,
+                          meas_sd          = 0.3)
 }

@@ -10,6 +10,10 @@
 #' @param treatment_group Integer (0 or 1) indicating treatment group.
 #'  (0 = Placebo, 1 = Vaccine).
 #' @param subject_id Identifier for the subject (numeric or character).
+#' @param perm_rise Numeric scalar. Permanent rise in titre following an infection event.
+#' @param temp_rise Numeric scalar. Initial temporary rise in titre following
+#'   an infection event in seronegative individuals.
+#' @param temp_decay Numeric scalar. Decay rate of the temporary titre rise.
 #' @param meas_sd A non-negative real value that corresponds to the standard
 #'   deviation of a normal measurement model of log titres.
 #' @param infection_times Numeric vector of times of infection events relative
@@ -28,83 +32,36 @@
 #' @export
 #'
 #' @examples
-#'   sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
-#'simulate_titre_trajectory(sampling_times   = sampling_times,
-#'                          treatment_group  = 0, # Placebo
-#'                          subject_id       = 1,
-#'                          infection_times  = c(300, 900),
-#'                          meas_sd          = 0.3)
+#' sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
+#' simulate_titre_trajectory(sampling_times   = sampling_times,
+#'                           treatment_group  = 0, # Placebo
+#'                           subject_id       = 1,
+#'                           infection_times  = c(300, 900),
+#'                           perm_rise        = 6,
+#'                           temp_rise        = 2,
+#'                           temp_decay       = 0.003,
+#'                           meas_sd          = 0.3)
 simulate_titre_trajectory <- function(sampling_times,
                                       treatment_group,
                                       subject_id,
+                                      perm_rise,
+                                      temp_rise,
+                                      temp_decay,
                                       meas_sd,
                                       infection_times = NULL,
                                       vac_times       = NULL)
 {
-  n_samples     <- length(sampling_times)
-
   df <- data.frame(
     subject_id = subject_id,
     time       = sampling_times)
 
-  log_titre_vals <- rep(0, n_samples)
-
-  # 0 corresponds to the date we start tracking the individual.
-  # This can be the enrolment date in a study or the date she became susceptible.
-  event_times <- c(0, infection_times)
-
-  n_events <- length(event_times)
-
-  serostatus <- 0
-
-  if(length(event_times) > 1)
-  {
-    for(j in 2:n_events)
-    {
-      start_interval <- event_times[[j]]
-
-      end_interval <- ifelse(j == n_events,
-                             sampling_times[[n_samples]] + 1,
-                             event_times[[j + 1]])
-
-      times_within_interval <- sampling_times[sampling_times >= start_interval &
-                                                sampling_times <= end_interval]
-
-      # We add `end_interval` to the estimate the last titre right before the next
-      #  event
-      interval_times <- c(times_within_interval, end_interval)
-
-      time_since_event <- interval_times - start_interval
-
-      interval_idx   <- which(sampling_times %in% times_within_interval)
-
-      perm_rise <- 6 # Permanent rise
-
-      temp_rise_seroneg <- 2 # Temporary rise for seronegative individuals
-
-      decay_rate <- 0.003
-
-      delta_seropos <- ifelse(serostatus == 1, last_titre_prev_inf - perm_rise, 0)
-
-      temp_rise <- temp_rise_seroneg + delta_seropos
-
-      sim_titres <- titre_decay_floor(par_alpha = perm_rise,
-                                      par_beta  = temp_rise,
-                                      par_delta = decay_rate,
-                                      time      = time_since_event)
-
-      log_titre_vals[interval_idx] <- sim_titres[-length(sim_titres)]
-
-      # Last titre of the previous infection
-      last_titre_prev_inf <- sim_titres[length(sim_titres)]
-
-      # Any event (vac or inf) will render an individual seropositive
-      serostatus <- 1
-    }
-
-  }
-
-
+  log_titre_vals <- simulate_true_titre(sampling_times  = sampling_times,
+                                        perm_rise       = perm_rise,
+                                        temp_rise       = temp_rise,
+                                        temp_decay      = temp_decay,
+                                        treatment_group = treatment_group,
+                                        infection_times = infection_times,
+                                        vac_times       = vac_times)
 
   df$true <- log_titre_vals
 
@@ -127,6 +84,94 @@ measurement_model <- function(true_titre, measurement_error, LOD)
   obs_titre
 }
 
+#' Simulate expected antibody titre dynamics
+#'
+#' This function generates simulated log-transformed antibody titre values
+#' at specified sampling times, given infection (and potentially vaccination)
+#' events and immune response parameters.
+#' @inheritParams simulate_titre_trajectory
+#'
+#' @returns A numeric vector of length equal to \code{sampling_times},
+#'  containing simulated log antibody titre values.
+#'
+#' @export
+#'
+#' @examples
+#' sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
+#' simulate_titre_trajectory(sampling_times   = sampling_times,
+#'                           perm_rise        = 6,
+#'                           temp_rise        = 2,
+#'                           temp_decay       = 0.003,
+#'                           treatment_group  = 0, # Placebo
+#'                           infection_times  = c(300, 900))
+simulate_true_titre <- function(sampling_times,
+                                perm_rise,
+                                temp_rise,
+                                temp_decay,
+                                treatment_group,
+                                infection_times = NULL,
+                                vac_times       = NULL)
+{
+  n_samples      <- length(sampling_times)
+  log_titre_vals <- rep(0, n_samples)
+
+  # 0 corresponds to the date we start tracking the individual.
+  # This can be the enrolment date in a study or the date he/she became susceptible.
+  event_times <- c(0, infection_times)
+
+  n_events <- length(event_times)
+
+  serostatus <- 0
+
+  if(length(event_times) > 1)
+  {
+    for(j in 2:n_events)
+    {
+      start_interval <- event_times[[j]]
+
+      end_interval <- ifelse(j == n_events,
+                             sampling_times[[n_samples]] + 1, # Extra day
+                             event_times[[j + 1]])
+
+      times_within_interval <- sampling_times[sampling_times >= start_interval &
+                                                sampling_times <= end_interval]
+
+      # We add `end_interval` to the estimate the last titre right before the
+      #  next event
+      interval_times <- c(times_within_interval, end_interval)
+
+      time_since_event <- interval_times - start_interval
+
+      temp_rise_seroneg <- temp_rise # Temporary rise for seronegative individuals
+
+      decay_rate <- temp_decay
+
+      delta_seropos <- ifelse(serostatus == 1,
+                              last_titre_prev_inf - perm_rise,
+                              0)
+
+      temp_rise_this_inf <- temp_rise_seroneg + delta_seropos
+
+      sim_titres <- titre_decay_floor(par_alpha = perm_rise,
+                                      par_beta  = temp_rise_this_inf,
+                                      par_delta = decay_rate,
+                                      time      = time_since_event)
+
+      interval_idx                 <- which(sampling_times %in%
+                                              times_within_interval)
+      log_titre_vals[interval_idx] <- sim_titres[-length(sim_titres)]
+
+      # Last titre of the previous infection
+      last_titre_prev_inf <- sim_titres[length(sim_titres)]
+
+      # Any event (vac or inf) will render an individual seropositive
+      serostatus <- 1
+    }
+  }
+
+  log_titre_vals
+}
+
 
 #' Simulate antibody titre trajectories from birth
 #'
@@ -147,9 +192,14 @@ measurement_model <- function(true_titre, measurement_error, LOD)
 #'   age             = 10,
 #'   subject_id      = 3,
 #'   treatment_group = 0,
+#'   perm_rise       = 6,
+#'   temp_rise       = 2,
 #'   meas_sd         = 0)
 simulate_titres_seropositive <- function(inf_times_sbs, sampling_times, age,
                                         subject_id, treatment_group,
+                                        perm_rise,
+                                        temp_rise,
+                                        temp_decay,
                                         meas_sd) {
   # We assume that the first blood drawn was taken on the individual's birthday
   sampling_times_rel_to_last_birthday <- sampling_times - min(sampling_times)
@@ -166,9 +216,108 @@ simulate_titres_seropositive <- function(inf_times_sbs, sampling_times, age,
     treatment_group = treatment_group,
     subject_id      = subject_id,
     infection_times = inf_times_sbs,
+    perm_rise       = perm_rise,
+    temp_rise       = temp_rise,
+    temp_decay      = temp_decay,
     meas_sd         = meas_sd)
 
   sim_titre_df$time <- sampling_times
 
   sim_titre_df
+}
+
+simulate_titres_from_enrolment <- function(infection_times, sampling_times,
+                                           perm_rise, temp_rise, temp_decay,
+                                           baseline)
+{
+  n_samples      <- length(sampling_times)
+  log_titre_vals <- rep(baseline, n_samples)
+
+  event_times <- c(sampling_times[[1]],
+                   infection_times)
+
+  n_events <- length(event_times)
+
+  serostatus <- ifelse(baseline > 0, 1, 0)
+
+  if(n_events > 1)
+  {
+    for(j in 1:n_events)
+    {
+      if(j == 1) last_titre_prev_inf <- baseline
+
+      titre_obj <- calculate_interval_titres(
+        j                   = j,
+        event_times         = event_times,
+        n_events            = n_events,
+        sampling_times      = sampling_times,
+        n_samples           = n_samples,
+        perm_rise           = perm_rise,
+        temp_rise           = temp_rise,
+        temp_decay          = temp_decay,
+        serostatus          = serostatus,
+        baseline            = baseline,
+        last_titre_prev_inf = last_titre_prev_inf)
+
+      interval_idx                 <- titre_obj$interval_idx
+      log_titre_vals[interval_idx] <- titre_obj$sim_titres
+      last_titre_prev_inf          <- titre_obj$last_titre_prev_inf
+      # Any event (vac or inf) will render an individual seropositive
+      serostatus                   <- 1
+    }
+  }
+
+  log_titre_vals
+}
+
+calculate_interval_titres <- function(j, event_times, n_events, sampling_times,
+                                      n_samples, perm_rise, temp_rise,
+                                      temp_decay, serostatus, baseline = NULL,
+                                      last_titre_prev_inf)
+{
+  start_interval <- event_times[[j]]
+
+  end_interval <- ifelse(j == n_events,
+                         sampling_times[[n_samples]] + 1, # Extra day
+                         event_times[[j + 1]])
+
+  times_within_interval <- sampling_times[sampling_times >= start_interval &
+                                            sampling_times <= end_interval]
+
+  # We add `end_interval` to the estimate the last titre right before the
+  #  next event
+  interval_times  <- c(times_within_interval, end_interval)
+
+  time_since_event <- interval_times - start_interval
+
+  temp_rise_seroneg <- temp_rise # Temporary rise for seronegative individuals
+
+  decay_rate <- temp_decay
+
+  if(j == 1)
+  {
+    temp_rise_this_inf <- max(0, baseline - perm_rise)
+  } else {
+    delta_seropos <- ifelse(serostatus == 1,
+                            last_titre_prev_inf - perm_rise,
+                            0)
+    temp_rise_this_inf <- temp_rise_seroneg + delta_seropos
+  }
+
+  sim_titres <- titre_decay_floor(par_alpha = perm_rise,
+                                  par_beta  = temp_rise_this_inf,
+                                  par_delta = decay_rate,
+                                  time      = time_since_event)
+
+  interval_idx                 <- which(sampling_times %in%
+                                          times_within_interval)
+  # Any event (vac or inf) will render an individual seropositive
+  serostatus <- 1
+
+  list(interval_idx        = interval_idx,
+       sim_titres          = sim_titres[-length(sim_titres)],
+       # Last titre of the previous infection
+       last_titre_prev_inf = sim_titres[length(sim_titres)],
+       serostatus          = serostatus)
+
 }
