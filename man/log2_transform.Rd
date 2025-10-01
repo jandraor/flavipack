@@ -7,14 +7,14 @@
 log2_transform(titre)
 }
 \arguments{
-\item{titre}{Numeric vector of titres.}
+\item{titre}{Numeric vector of original antibody titres.}
 }
 \value{
 Numeric vector of log2-transformed titres.
 }
 \description{
-Applies a log2 transformation to antibody titres relative to a baseline of 10,
- returning 1 for a titre of 10 and incrementing by 1 for each doubling.
+Applies a log2 transformation to antibody titres relative to a baseline of 10.
+A titre of 10 returns 1, and each doubling of the titre increments the value by 1.
 }
 \examples{
 log2_transform(10)   # 1
