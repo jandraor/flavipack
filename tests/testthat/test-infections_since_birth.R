@@ -1,46 +1,32 @@
-test_that("simulate_infections_since_birth() works",
+test_that("simulate_DENV_infections_since_birth() works",
 {
-  individuals_df <- data.frame(subject_id       = 1,
-                               birth_year_index = 9,
-                               is_vaccinated    = 0,
-                               vac_year         = 15)
+  set.seed(123)
 
-  rho        <- 0.05
-  stop_index <- 15
-  lambda     <- rep(0.14, 15)
+  actual <- simulate_DENV_infections_since_birth(lambda_serotype = 0.1,
+                                                   loss_rate       = 0.005,
+                                                   n_individuals   = 5,
+                                                   final_age       = 5)
 
-  set.seed(1437)
+  expected <- data.frame(infected_ind = c(1, 5, 3, 5, 1),
+                         age          = c(1, 1, 2, 2, 5))
 
-  actual <- simulate_infections_since_birth(individuals_df,
-                                            lambda,
-                                            rho,
-                                            stop_index,
-                                            rho_v = 0.12)
-
-  expect_equal(nrow(actual), 5)
+  expect_equal(actual, expected)
 })
 
-test_that("simulate_single_individual produces a different value for different rho", {
+test_that("simulate_DENV_infections_cohort() works",
+{
+  cohort_df <- data.frame(subject_id = c(rep(1, 3), rep(2, 2)),
+                          age_sample = c(5:7, 2:3))
 
-  individual_df <- data.frame(subject_id       = 1,
-                              birth_year_index = 0,
-                              is_vaccinated    = 0,
-                              vac_year         = 1)
+  set.seed(1226)
 
-  stop_index  <- 10
-  lambda      <- rep(0.1, 10)
-  vac_buckets <- 4
-  rho         <- 0
-  rho_v       <- 0
+  actual <- simulate_DENV_infections_cohort(lambda_serotype = 0.1,
+                                       loss_rate       = 0.005,
+                                       cohort_df       = cohort_df)
 
-  set.seed(123)
+  expected <- cohort_df
 
-  sim_rho_0 <- simulate_single_individual(individual_df, stop_index, lambda, rho,
-                                       vac_buckets, rho_v)
-  set.seed(123)
-  rho         <- 0.5
-  sim_rho_0.5 <- simulate_single_individual(individual_df, stop_index, lambda, rho,
-                                       vac_buckets, rho_v)
+  expected$infection <- c(FALSE, FALSE, FALSE, TRUE, FALSE)
 
-  expect_false(isTRUE(all.equal(sim_rho_0, sim_rho_0.5)))
+  expect_equal(actual, expected)
 })
