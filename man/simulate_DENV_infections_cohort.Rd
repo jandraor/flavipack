@@ -38,7 +38,7 @@ cohort_df <- data.frame(
   subject_id = rep(1:5, each = 5),
   age_sample = rep(1:5, times = 5))
 
-simulate_infections_cohort(
+simulate_DENV_infections_cohort(
   lambda_serotype = 0.1,
   loss_rate       = 0.01,
   cohort_df       = cohort_df)

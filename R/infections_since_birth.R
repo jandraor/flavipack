@@ -131,11 +131,12 @@ simulate_DENV_infections_since_birth <- function(lambda_serotype,
 #'   subject_id = rep(1:5, each = 5),
 #'   age_sample = rep(1:5, times = 5))
 #'
-#' simulate_infections_cohort(
+#' simulate_DENV_infections_cohort(
 #'   lambda_serotype = 0.1,
 #'   loss_rate       = 0.01,
 #'   cohort_df       = cohort_df)
 #'
+#' @export
 simulate_DENV_infections_cohort <- function(lambda_serotype, loss_rate, cohort_df)
 {
   final_age     <- max(cohort_df$age_sample)
