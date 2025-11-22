@@ -8,8 +8,9 @@ simulate_titre_trajectory(
   sampling_times,
   treatment_group,
   subject_id,
-  perm_rise,
-  temp_rise,
+  perm_rise = NULL,
+  temp_rise = NULL,
+  temp_decay = NULL,
   meas_sd,
   infection_times = NULL,
   vac_times = NULL
@@ -24,10 +25,14 @@ the start of the study.}
 
 \item{subject_id}{Identifier for the subject (numeric or character).}
 
-\item{perm_rise}{Numeric scalar. Permanent rise in titre following an infection event.}
+\item{perm_rise}{Numeric scalar. Permanent rise in titre following an
+infection. It must have the same length as the number of infections.}
 
-\item{temp_rise}{Numeric scalar. Initial temporary rise in titre following
-an infection event in seronegative individuals.}
+\item{temp_rise}{Numeric scalar. Initial temporary rise in titre
+following an infection. It must have the same length as the number of
+infections.}
+
+\item{temp_decay}{Numeric scalar. Decay rate of the temporary titre rise.}
 
 \item{meas_sd}{A non-negative real value that corresponds to the standard
 deviation of a normal measurement model of log titres.}
@@ -61,5 +66,6 @@ simulate_titre_trajectory(sampling_times   = sampling_times,
                           infection_times  = c(300, 900),
                           perm_rise        = 6,
                           temp_rise        = 2,
+                          temp_decay       = 0.003,
                           meas_sd          = 0.3)
 }

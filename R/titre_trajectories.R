@@ -10,9 +10,11 @@
 #' @param treatment_group Integer (0 or 1) indicating treatment group.
 #'  (0 = Placebo, 1 = Vaccine).
 #' @param subject_id Identifier for the subject (numeric or character).
-#' @param perm_rise Numeric scalar. Permanent rise in titre following an infection event.
-#' @param temp_rise Numeric scalar. Initial temporary rise in titre following
-#'   an infection event in seronegative individuals.
+#' @param perm_rise Numeric scalar. Permanent rise in titre following an
+#'  infection. It must have the same length as the number of infections.
+#' @param temp_rise Numeric scalar. Initial temporary rise in titre
+#'  following an infection. It must have the same length as the number of
+#'  infections.
 #' @param temp_decay Numeric scalar. Decay rate of the temporary titre rise.
 #' @param meas_sd A non-negative real value that corresponds to the standard
 #'   deviation of a normal measurement model of log titres.
@@ -44,24 +46,37 @@
 simulate_titre_trajectory <- function(sampling_times,
                                       treatment_group,
                                       subject_id,
-                                      perm_rise,
-                                      temp_rise,
-                                      temp_decay,
+                                      perm_rise  = NULL,
+                                      temp_rise  = NULL,
+                                      temp_decay = NULL,
                                       meas_sd,
                                       infection_times = NULL,
                                       vac_times       = NULL)
 {
-  df <- data.frame(
-    subject_id = subject_id,
-    time       = sampling_times)
+  if (length(perm_rise) != length(infection_times)) {
+    stop("Vectors 'perm_rise' and 'infection_times' must have the same length.")
+  }
 
-  log_titre_vals <- simulate_true_titre(sampling_times  = sampling_times,
-                                        perm_rise       = perm_rise,
-                                        temp_rise       = temp_rise,
-                                        temp_decay      = temp_decay,
-                                        treatment_group = treatment_group,
-                                        infection_times = infection_times,
-                                        vac_times       = vac_times)
+  if (length(temp_rise) != length(infection_times)) {
+    stop("Vectors 'temp_rise' and 'infection_times' must have the same length.")
+  }
+
+  if (length(temp_decay) != length(temp_decay)) {
+    stop("Vectors 'temp_decay' and 'infection_times' must have the same length.")
+  }
+
+
+  df <- data.frame(subject_id = subject_id,
+                   time       = sampling_times)
+
+  log_titre_vals <- simulate_true_titre_DENV(
+    sampling_times  = sampling_times,
+    perm_rise       = perm_rise,
+    temp_rise       = temp_rise,
+    temp_decay      = temp_decay,
+    treatment_group = treatment_group,
+    infection_times = infection_times,
+    vac_times       = vac_times)
 
   df$true <- log_titre_vals
 
@@ -84,90 +99,62 @@ measurement_model <- function(true_titre, measurement_error, LOD)
   obs_titre
 }
 
-#' Simulate expected antibody titre dynamics
+#' Simulate true titres
 #'
 #' This function generates simulated log-transformed antibody titre values
 #' at specified sampling times, given infection (and potentially vaccination)
-#' events and immune response parameters.
+#' events and immune response parameters. This function assumes that the
+#' individual is seronegative at time 0. Time 0 can represent the start of a
+#' study or the time at which the individual became susceptible.
+#'
 #' @inheritParams simulate_titre_trajectory
 #'
-#' @returns A numeric vector of length equal to \code{sampling_times},
+#' @return A numeric vector of length equal to \code{sampling_times},
 #'  containing simulated log antibody titre values.
 #'
 #' @export
 #'
 #' @examples
 #' sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
-#' simulate_titre_trajectory(sampling_times   = sampling_times,
-#'                           perm_rise        = 6,
-#'                           temp_rise        = 2,
-#'                           temp_decay       = 0.003,
-#'                           treatment_group  = 0, # Placebo
-#'                           infection_times  = c(300, 900))
-simulate_true_titre <- function(sampling_times,
-                                perm_rise,
-                                temp_rise,
-                                temp_decay,
-                                treatment_group,
-                                infection_times = NULL,
-                                vac_times       = NULL)
+#' simulate_true_titre(sampling_times   = sampling_times,
+#'                     perm_rise        = 6,
+#'                     temp_rise        = 2,
+#'                     temp_decay       = 0.003,
+#'                     treatment_group  = 0, # Placebo
+#'                     infection_times  = c(300, 900))
+simulate_true_titre_DENV<- function(sampling_times,
+                                    perm_rise,
+                                    temp_rise,
+                                    temp_decay,
+                                    treatment_group,
+                                    infection_times = NULL,
+                                    vac_times       = NULL)
 {
-  n_samples      <- length(sampling_times)
-  log_titre_vals <- rep(0, n_samples)
+  n_inf     <- length(infection_times)
+  n_samples <- length(sampling_times)
 
-  # 0 corresponds to the date we start tracking the individual.
-  # This can be the enrolment date in a study or the date he/she became susceptible.
-  event_times <- c(0, infection_times)
+  if(length(infection_times) == 0) return(rep(0, n_samples))
 
-  n_events <- length(event_times)
+  titre_matrix <- matrix(0,
+                         nrow = length(infection_times),
+                         ncol = length(sampling_times))
 
-  serostatus <- 0
-
-  if(length(event_times) > 1)
+  for(i in seq_len(n_inf))
   {
-    for(j in 2:n_events)
-    {
-      start_interval <- event_times[[j]]
+    idx             <- which(sampling_times > infection_times[[i]])
+    times_after_inf <- sampling_times[idx]
 
-      end_interval <- ifelse(j == n_events,
-                             sampling_times[[n_samples]] + 1, # Extra day
-                             event_times[[j + 1]])
+    sim_titre <- titre_decay_floor(
+      par_alpha = perm_rise[[i]],
+      par_beta  = temp_rise[[i]],
+      par_delta = temp_decay[[i]],
+      time      = times_after_inf - infection_times[[i]])
 
-      times_within_interval <- sampling_times[sampling_times >= start_interval &
-                                                sampling_times <= end_interval]
-
-      # We add `end_interval` to the estimate the last titre right before the
-      #  next event
-      interval_times <- c(times_within_interval, end_interval)
-
-      time_since_event <- interval_times - start_interval
-
-      temp_rise_seroneg <- temp_rise # Temporary rise for seronegative individuals
-
-      decay_rate <- temp_decay
-
-      delta_seropos <- ifelse(serostatus == 1,
-                              last_titre_prev_inf - perm_rise,
-                              0)
-
-      temp_rise_this_inf <- temp_rise_seroneg + delta_seropos
-
-      sim_titres <- titre_decay_floor(par_alpha = perm_rise,
-                                      par_beta  = temp_rise_this_inf,
-                                      par_delta = decay_rate,
-                                      time      = time_since_event)
-
-      interval_idx                 <- which(sampling_times %in%
-                                              times_within_interval)
-      log_titre_vals[interval_idx] <- sim_titres[-length(sim_titres)]
-
-      # Last titre of the previous infection
-      last_titre_prev_inf <- sim_titres[length(sim_titres)]
-
-      # Any event (vac or inf) will render an individual seropositive
-      serostatus <- 1
-    }
+    titre_matrix[i, idx] <- sim_titre
   }
+
+  log_titre_vals <- colSums(titre_matrix)
+
 
   log_titre_vals
 }
