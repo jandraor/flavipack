@@ -12,6 +12,7 @@ simulate_titres_seropositive(
   treatment_group,
   perm_rise,
   temp_rise,
+  temp_decay,
   meas_sd
 )
 }
@@ -30,10 +31,14 @@ the start of the study.}
 \item{treatment_group}{Integer (0 or 1) indicating treatment group.
 (0 = Placebo, 1 = Vaccine).}
 
-\item{perm_rise}{Numeric scalar. Permanent rise in titre following an infection event.}
+\item{perm_rise}{Numeric scalar. Permanent rise in titre following an
+infection. It must have the same length as the number of infections.}
 
-\item{temp_rise}{Numeric scalar. Initial temporary rise in titre following
-an infection event in seronegative individuals.}
+\item{temp_rise}{Numeric scalar. Initial temporary rise in titre
+following an infection. It must have the same length as the number of
+infections.}
+
+\item{temp_decay}{Numeric scalar. Decay rate of the temporary titre rise.}
 
 \item{meas_sd}{A non-negative real value that corresponds to the standard
 deviation of a normal measurement model of log titres.}

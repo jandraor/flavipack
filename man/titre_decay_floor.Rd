@@ -2,28 +2,34 @@
 % Please edit documentation in R/titre_dynamics.R
 \name{titre_decay_floor}
 \alias{titre_decay_floor}
-\title{Linear antibody titre dynamics with lower bound}
+\title{Exponential antibody titre dynamics with a lower bound}
 \usage{
 titre_decay_floor(par_alpha, par_beta, par_delta, time)
 }
 \arguments{
-\item{par_alpha}{A scalar indicating the permanent rise.}
+\item{par_alpha}{Numeric scalar. Permanent baseline (lower bound) of the antibody titre.}
 
-\item{par_beta}{A scalar indicating the temporary rise.}
+\item{par_beta}{Numeric scalar. Temporary rise above the baseline immediately after infection.}
 
-\item{par_delta}{A scalar indicating the decay rate.}
+\item{par_delta}{Numeric scalar. Decay rate controlling how quickly titres return to baseline.}
 
 \item{time}{Numeric vector. Time points at which to evaluate titres.}
 }
 \value{
-Numeric vector of titres at each time point.
+A numeric vector of titre values corresponding to each time point.
 }
 \description{
-Linear antibody titre dynamics with lower bound
+This function models antibody titre dynamics following infection or vaccination,
+assuming an exponential decay from a peak towards a permanent baseline level.
+The titre value starts at \code{par_alpha + par_beta} and decays exponentially
+at rate \code{par_delta}, asymptotically approaching the lower bound \code{par_alpha}.
 }
 \examples{
-titre_decay_floor(par_alpha = 6,
-                  par_beta  = 2,
-                  par_delta = 0.003,
-                  time      = seq(0, 365 * 3))
+# Example: 3-year decay from a peak titre back to baseline
+titre_decay_floor(
+  par_alpha = 6,
+  par_beta  = 2,
+  par_delta = 0.003,
+  time      = seq(0, 365 * 3)
+)
 }

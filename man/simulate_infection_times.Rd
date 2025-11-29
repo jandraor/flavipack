@@ -4,10 +4,10 @@
 \alias{simulate_infection_times}
 \title{Simulate infection times}
 \usage{
-simulate_infection_times(lambda, stop_time, min_gap, max_inf)
+simulate_infection_times(daily_lambda, stop_time, min_gap, max_inf)
 }
 \arguments{
-\item{lambda}{A scalar corresponding to the daily force of infection.}
+\item{daily_lambda}{A scalar corresponding to the daily force of infection.}
 
 \item{stop_time}{A numeric scalar specifying the maximum time horizon for the
 simulation.}

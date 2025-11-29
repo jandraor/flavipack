@@ -5,7 +5,7 @@
 \title{Simulates infection times from birth}
 \usage{
 simulate_infection_times_since_birth(
-  lambda,
+  daily_lambda,
   age_enrolment,
   offset_start,
   stop_time,
@@ -14,13 +14,13 @@ simulate_infection_times_since_birth(
 )
 }
 \arguments{
-\item{lambda}{A scalar corresponding to the daily force of infection.}
+\item{daily_lambda}{A scalar corresponding to the daily force of infection.}
 
 \item{age_enrolment}{Numeric. Age of the individual at study enrolment (in years).}
 
 \item{offset_start}{Numeric. Time from start of study to enrolment (in days).}
 
-\item{stop_time}{Numeric. Duration from the start to the end of the study (in days)..}
+\item{stop_time}{Numeric. Duration from the start to the end of the study (in days).}
 
 \item{min_gap}{A scalar representing the minimum time that must elapse
 between two consecutive infections. This interval is due to temporary

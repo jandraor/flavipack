@@ -166,3 +166,13 @@ test_that("simulate_antibody_titres() works", {
 
   expect_equal(actual, expected)
 })
+
+test_that("titre_decay_floor() works", {
+
+  actual <- titre_decay_floor(par_alpha = 1, par_beta = 2, par_delta = 0.02,
+                              time = 100)
+
+  expected <- 1 + 2 * exp(-0.02 * 100)
+
+  expect_equal(actual, expected)
+})

@@ -49,9 +49,9 @@
 #'
 #' @export
 simulate_DENV_infections_since_birth <- function(lambda_serotype,
-                                                   loss_rate,
-                                                   n_individuals,
-                                                   final_age)
+                                                 loss_rate,
+                                                 n_individuals,
+                                                 final_age)
 {
   # 0 means full susceptibility
   current_state   <- matrix(0, nrow = n_individuals, ncol = 4)
@@ -59,8 +59,6 @@ simulate_DENV_infections_since_birth <- function(lambda_serotype,
 
   for(i in 1:final_age) # years
   {
-    #infection_matrix_yr <- matrix(0, nrow = n_individuals, ncol = 4)
-
     #-----Loss of immunity------------------------------------------------------
     current_state <- (current_state - loss_rate)
     current_state[current_state < 0] <- 0
@@ -137,7 +135,8 @@ simulate_DENV_infections_since_birth <- function(lambda_serotype,
 #'   cohort_df       = cohort_df)
 #'
 #' @export
-simulate_DENV_infections_cohort <- function(lambda_serotype, loss_rate, cohort_df)
+simulate_DENV_infections_cohort <- function(lambda_serotype, loss_rate,
+                                            cohort_df)
 {
   final_age     <- max(cohort_df$age_sample)
   subject_ids   <- unique(cohort_df$subject_id)
@@ -146,9 +145,14 @@ simulate_DENV_infections_cohort <- function(lambda_serotype, loss_rate, cohort_d
   cohort_df$key <- paste(cohort_df$subject_id, cohort_df$age_sample, sep = "_")
 
   sim_inf <- simulate_DENV_infections_since_birth(lambda_serotype,
-                                                    loss_rate,
-                                                    n_individuals,
-                                                    final_age)
+                                                  loss_rate,
+                                                  n_individuals,
+                                                  final_age)
+
+  if(is.character(subject_ids))
+  {
+    sim_inf$infected_ind <- subject_ids[sim_inf$infected_ind]
+  }
 
   sim_inf$key <- paste(sim_inf$infected_ind, sim_inf$age, sep = "_")
 
@@ -157,4 +161,101 @@ simulate_DENV_infections_cohort <- function(lambda_serotype, loss_rate, cohort_d
   cohort_df$key <- NULL
 
   cohort_df
+}
+
+#' Title
+#'
+#' @param lambda TBD
+#' @param min_gap TBD
+#' @param stop_time TBD
+#' @param rho TBD
+#'
+#' @returns a data frame
+#' @export
+#'
+#' @examples
+#' simulate_DENV_infections_via_competition(0.1, 365, 5 * 365, 0.01)
+simulate_DENV_infections_via_competition <- function(lambda,
+                                                     min_gap, stop_time,
+                                                     rho)
+{
+  lambda <- lambda / 365
+  rho    <- rho / 365
+  n_serotypes     <- 4
+
+  infection_times <- numeric(0)
+  inf_serotypes   <- numeric(0)
+
+  # --- First infection ---
+  # Assume first infection can happen from any serotype, exponential draw
+  first_infection <- rexp(1, rate = 4 * lambda)
+  inf_time        <- first_infection
+
+  if(inf_time > stop_time) return(data.frame())
+
+  infection_times <- c(infection_times, inf_time)
+  inf_serotypes   <- c(inf_serotypes, sample(n_serotypes, 1))
+
+  # --- Main loop ---
+  while (!is.na(inf_time) && inf_time <= stop_time)
+  {
+    candidate_times <- rep(NA, n_serotypes)
+
+    for (st in seq_len(n_serotypes))
+    {
+      if (st %in% inf_serotypes)
+      {
+        pos           <- max(which(inf_serotypes == st))
+        last_inf_time <- infection_times[[pos]]
+        today         <- max(infection_times) + 365
+
+        t0 <- today - last_inf_time
+
+        time_to_infection <- simulate_wait_inverse(
+          lambda = lambda,
+          t0 = t0,
+          rho = rho
+        )
+      } else {
+        time_to_infection <- rexp(1, rate = lambda)
+      }
+      candidate_times[[st]] <- time_to_infection
+    }
+
+    infecting_st <- which.min(candidate_times)
+
+    time_to_infection_selected <- candidate_times[[infecting_st]]
+
+    inf_time <- max(infection_times) + 365 + time_to_infection_selected
+
+    if (is.na(inf_time) || inf_time > stop_time) break
+
+    inf_serotypes <- c(inf_serotypes, infecting_st)
+    infection_times <- c(infection_times, inf_time)
+  }
+
+  data.frame(time = infection_times, serotype = inf_serotypes)
+}
+
+simulate_wait_inverse <- function(lambda, rho, t0) {
+  # time until FOI reaches cap
+  tau_cap <- 1/rho - t0
+
+  if (tau_cap < 0) tau_cap <- 0  # already at cap
+
+  # cumulative hazard at cap
+  H_cap <- lambda * rho * (t0 * tau_cap + tau_cap^2 / 2)
+
+  # draw uniform and transform
+  S <- -log(runif(1))
+
+  if (S <= H_cap) {
+    # quadratic branch (before cap)
+    tau <- -t0 + sqrt(t0^2 + 2 * S / (lambda * rho))
+  } else {
+    # linear branch (after cap)
+    tau <- tau_cap + (S - H_cap)/lambda
+  }
+
+  tau  # waiting time from t0
 }

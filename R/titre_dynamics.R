@@ -118,7 +118,6 @@ bi_exponential_decay <- function(t, A0, par_sigma, par_gamma, par_rho)
           (1 - par_rho) * exp(-par_gamma * t))
 }
 
-
 bi_exponential_step <- function(A0, par_sigma, par_gamma, par_rho)
 {
   short_dyn <-  A0 * par_rho * exp(-par_sigma * 360)
@@ -174,22 +173,30 @@ simulate_antibody_titres <- function(n_years, A0, par_rho,
   A
 }
 
-#' Linear antibody titre dynamics with lower bound
+#' Exponential antibody titre dynamics with a lower bound
 #'
-#' @param par_alpha A scalar indicating the permanent rise.
-#' @param par_beta A scalar indicating the temporary rise.
-#' @param par_delta A scalar indicating the decay rate.
+#' This function models antibody titre dynamics following infection or vaccination,
+#' assuming an exponential decay from a peak towards a permanent baseline level.
+#' The titre value starts at \code{par_alpha + par_beta} and decays exponentially
+#' at rate \code{par_delta}, asymptotically approaching the lower bound \code{par_alpha}.
+#'
+#' @param par_alpha Numeric scalar. Permanent baseline (lower bound) of the antibody titre.
+#' @param par_beta Numeric scalar. Temporary rise above the baseline immediately after infection.
+#' @param par_delta Numeric scalar. Decay rate controlling how quickly titres return to baseline.
 #' @param time Numeric vector. Time points at which to evaluate titres.
 #'
-#' @returns Numeric vector of titres at each time point.
+#' @returns A numeric vector of titre values corresponding to each time point.
 #' @export
 #'
 #' @examples
-#' titre_decay_floor(par_alpha = 6,
-#'                   par_beta  = 2,
-#'                   par_delta = 0.003,
-#'                   time      = seq(0, 365 * 3))
+#' # Example: 3-year decay from a peak titre back to baseline
+#' titre_decay_floor(
+#'   par_alpha = 6,
+#'   par_beta  = 2,
+#'   par_delta = 0.003,
+#'   time      = seq(0, 365 * 3)
+#' )
 titre_decay_floor <- function(par_alpha, par_beta, par_delta, time)
 {
-  pmax((par_alpha + par_beta) - par_delta * time, par_alpha)
+  par_alpha + par_beta * exp(-par_delta * time)
 }

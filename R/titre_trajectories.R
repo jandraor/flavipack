@@ -80,15 +80,41 @@ simulate_titre_trajectory <- function(sampling_times,
 
   df$true <- log_titre_vals
 
-  df$meas <- measurement_model(log_titre_vals,
-                               measurement_error = meas_sd,
-                               LOD = 1)
+  df$meas <- simulate_observed_titres(log_titre_vals,
+                                      measurement_error = meas_sd,
+                                      LOD = 1)
 
   df
 }
 
-# Gaussian measurement errors
-measurement_model <- function(true_titre, measurement_error, LOD)
+#' Simulate Observed Titres with Gaussian Measurement Error
+#'
+#' This function simulates observed titre values by adding Gaussian (normal)
+#' measurement error to true underlying titres. Any observed value falling below
+#' a specified limit of detection (LOD) is reported as zero.
+#'
+#' @param true_titre Numeric vector. True underlying titre values.
+#' @param measurement_error Numeric scalar. Standard deviation of the Gaussian measurement error.
+#' @param LOD Numeric scalar. Limit of detection below which observed titres are set to zero.
+#'
+#' @return A numeric vector of observed titres after adding measurement error
+#'   and applying the LOD rule.
+#'
+#' @details
+#' Observations are generated as:
+#' \deqn{obs = true\_titre + \epsilon,\quad \epsilon \sim \mathcal{N}(0, \sigma^2)}
+#' where `measurement_error` is the standard deviation \eqn{\sigma} of the noise.
+#' Any value less than `LOD` is returned as 0, mimicking assay detection limits.
+#'
+#' @examples
+#' set.seed(123)
+#' true <- c(5, 10, 2, 1)
+#' simulate_titre_observation(true_titre = true,
+#'                            measurement_error = 1.5,
+#'                            LOD = 1)
+#'
+#' @export
+simulate_observed_titres <- function(true_titre, measurement_error, LOD)
 {
   obs_titre <- true_titre + stats::rnorm(n    = length(true_titre),
                                          mean = 0,
