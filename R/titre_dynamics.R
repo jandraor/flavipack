@@ -173,6 +173,90 @@ simulate_antibody_titres <- function(n_years, A0, par_rho,
   A
 }
 
+#' Simulate DENV Long-Term Titre Trajectories
+#'
+#' This function simulates long-term antibody titre trajectories for dengue
+#'  virus (DENV) infections, given an individual's infection history. Each
+#'  infection produces a peak antibody titre that may be boosted by subsequent
+#'  infections. The boost saturates asymptotically at a maximum fraction
+#'  \code{phi} relative to the first infection peak, with the rate of saturation
+#'  controlled by \code{beta}. Titres then decay exponentially from the peak
+#'  using the corresponding decay rate.
+#'
+#' @param inf_times Integer vector of ages at which infections occur.
+#' @param decay_rate_vec Numeric vector of decay rates for each infection. The
+#'   i-th element is used for the i-th infection; if more than four infections
+#'   occur, the fourth element is reused for subsequent infections.
+#' @param log_first_peak Numeric. Log2-scale peak antibody titre of the first
+#'  infection.
+#' @param phi Numeric. Asymptotic maximum proportional boost for reinfections,
+#'   relative to the first infection peak. For example, \code{phi = 0.5} means
+#'   that at saturation the peak titre can increase by up to 50% over the first
+#'   peak.
+#' @param beta Numeric. Saturation rate controlling how quickly the boost
+#'   approaches \code{phi} with successive reinfections.
+#' @param subject_id Integer or character. Identifier for the simulated subject.
+#' @param final_age Integer. Final age/time index to simulate to; titres will
+#'   be returned for ages 1:\code{final_age}.
+#'
+#'
+#' @return A data frame with columns:
+#' \describe{
+#'   \item{subject_id}{Subject identifier.}
+#'   \item{age}{Integer ages from 1 to \code{final_age}.}
+#'   \item{titre}{Simulated antibody titre at each age.}
+#' }
+#'
+#' @examples
+#' simulate_DENV_long_decay_titres(
+#'   inf_times = c(10, 40, 120),
+#'   decay_rate_vec = c(0.05, 0.03, 0.02, 0.02),
+#'   log_first_peak = 6,
+#'   phi = 0.5,
+#'   kappa = 0.4,
+#'   subject_id = "z1",
+#'   final_age = 200
+#' )
+#'
+#' @export
+simulate_DENV_long_decay_titres <- function(inf_times,
+                                            decay_rate_vec,
+                                            log_first_peak,
+                                            phi,
+                                            beta,
+                                            subject_id,
+                                            final_age)
+{
+  titre_vals <- rep(5, final_age)
+
+  n_inf <- length(inf_times)
+
+  if(n_inf > 0)
+  {
+    for(inf_idx in 1:n_inf)
+    {
+      inf_age <- inf_times[[inf_idx]]
+
+      if(inf_idx == 1) A0 <- inv_log2_transform(log_first_peak)
+
+      if(inf_idx > 1)
+      {
+        multiplier <- 1 + phi * (1 - exp(-beta * (inf_idx - 1)))
+        A0 <- inv_log2_transform(log_first_peak * multiplier)
+      }
+
+      decay_rate <- ifelse(inf_idx < 4,
+                           decay_rate_vec[[inf_idx]], decay_rate_vec[[4]])
+
+      titre_vals[inf_age:final_age] <- A0 * exp(-decay_rate * 0:(final_age - inf_age))
+    }
+  }
+
+  data.frame(subject_id = subject_id,
+             age        = 1:final_age,
+             titre      = titre_vals)
+}
+
 #' Exponential antibody titre dynamics with a lower bound
 #'
 #' This function models antibody titre dynamics following infection or vaccination,
