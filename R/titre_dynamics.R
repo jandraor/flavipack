@@ -219,23 +219,30 @@ simulate_antibody_titres <- function(n_years, A0, par_rho,
 #' )
 #'
 #' @export
-simulate_DENV_long_decay_titres <- function(inf_times,
+simulate_DENV_long_decay_titres <- function(inf_times_list,
                                             decay_rate_vec,
                                             log_first_peak,
                                             phi,
                                             beta,
-                                            subject_id,
                                             final_age)
 {
-  titre_vals <- rep(5, final_age)
+  n_people <- length(inf_times_list)
 
-  n_inf <- length(inf_times)
+  titres <- matrix(5, nrow = n_people, ncol = final_age)
 
-  if(n_inf > 0)
+  for (i in seq_len(n_people))
   {
+    inf_times <- inf_times_list[[i]]
+    n_inf     <- length(inf_times)
+
+    if (n_inf == 0) next
+
+    end_ages <- c(inf_times[-1] - 1, final_age)
+
     for(inf_idx in 1:n_inf)
     {
       inf_age <- inf_times[[inf_idx]]
+      end_age <- end_ages[[inf_idx]]
 
       if(inf_idx == 1) A0 <- inv_log2_transform(log_first_peak)
 
@@ -245,16 +252,15 @@ simulate_DENV_long_decay_titres <- function(inf_times,
         A0 <- inv_log2_transform(log_first_peak * multiplier)
       }
 
-      decay_rate <- ifelse(inf_idx < 4,
-                           decay_rate_vec[[inf_idx]], decay_rate_vec[[4]])
+      decay_rate <- decay_rate_vec[[min(inf_idx, 4)]]
 
-      titre_vals[inf_age:final_age] <- A0 * exp(-decay_rate * 0:(final_age - inf_age))
+      len <- end_age - inf_age + 1
+
+      titres[i, inf_age:end_age] <- A0 * exp(-decay_rate * 0:(len - 1))
     }
   }
 
-  data.frame(subject_id = subject_id,
-             age        = 1:final_age,
-             titre      = titre_vals)
+  titres
 }
 
 #' Exponential antibody titre dynamics with a lower bound

@@ -178,23 +178,22 @@ test_that("titre_decay_floor() works", {
 })
 
 test_that("simulate_DENV_long_decay_titres() works",
-          {
-            inf_times      <- c(5, 7)
+{
+  inf_times      <- c(5, 7)
 
-            actual <- simulate_DENV_long_decay_titres(
-              inf_times      = inf_times,
-              decay_rate_vec = c(0.1, 0.05, 0.025, 0.0115),
-              log_first_peak = 1,
-              phi            = 2,
-              beta           = 1,
-              subject_id     = 1,
-              final_age      = 10)
+  actual <- simulate_DENV_long_decay_titres(
+    inf_times      = list(inf_times),
+    decay_rate_vec = c(0.1, 0.05, 0.025, 0.0115),
+    log_first_peak = 1,
+    phi            = 2,
+    beta           = 1,
+    final_age      = 10)
 
-            expected <- data.frame(subject_id = 1,
-                                   age        = 1:10,
-                                   titre = c(rep(5, 4),
-                                             10 * exp(-0.1 * (0:1)),
-                                             24.020082691 * exp(-0.05 *(0:3))))
+  titre_vals <- c(rep(5, 4),
+                  10 * exp(-0.1 * (0:1)),
+                  24.020082691 * exp(-0.05 *(0:3)))
 
-            expect_equal(actual, expected)
-          })
+  expected <- matrix(titre_vals, ncol = 10)
+
+  expect_equal(actual, expected)
+})
