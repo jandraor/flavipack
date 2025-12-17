@@ -185,7 +185,7 @@ test_that("simulate_DENV_long_decay_titres() works",
     inf_times      = list(inf_times),
     decay_rate_vec = c(0.1, 0.05, 0.025, 0.0115),
     log_first_peak = 1,
-    phi            = 2,
+    phi            = 3,
     beta           = 1,
     final_age      = 10)
 

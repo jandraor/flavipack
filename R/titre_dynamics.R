@@ -248,8 +248,8 @@ simulate_DENV_long_decay_titres <- function(inf_times_list,
 
       if(inf_idx > 1)
       {
-        multiplier <- 1 + phi * (1 - exp(-beta * (inf_idx - 1)))
-        A0 <- inv_log2_transform(log_first_peak * multiplier)
+        log_A0 <- phi - (phi - log_first_peak) * exp(-beta * (inf_idx - 1))
+        A0     <- inv_log2_transform(log_A0)
       }
 
       decay_rate <- decay_rate_vec[[min(inf_idx, 4)]]
