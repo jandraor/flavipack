@@ -18,7 +18,10 @@ Suggests:
 Config/testthat/edition: 3
 Imports: 
     dplyr,
+    Rcpp,
     stats,
     tidyr,
     utils
 RoxygenNote: 7.3.3
+LinkingTo: 
+    Rcpp

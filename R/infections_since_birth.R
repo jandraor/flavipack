@@ -70,7 +70,7 @@ simulate_DENV_infections_since_birth <- function(lambda_serotype,
     sus_lvl   <- 1 - current_state
     p_any_inf <- 1 - exp(-lambda_serotype * rowSums(sus_lvl))
 
-    infected <- stats::rbinom(n_individuals, 1, p_any_inf)
+    infected <- stats::runif(n_individuals) < p_any_inf
 
     idx <- which(infected == 1)
 

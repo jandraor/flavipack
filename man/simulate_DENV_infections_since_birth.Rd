@@ -55,7 +55,7 @@ The simulation follows these steps each year:
 }
 }
 \examples{
-simulate_yearly_infections_since_birth(
+simulate_DENV_infections_since_birth(
   lambda_serotype = 0.1,
   loss_rate       = 0.005,
   n_individuals   = 5,
