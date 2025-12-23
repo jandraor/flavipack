@@ -56,15 +56,15 @@ simulate_DENV_infections_since_birth <- function(lambda_serotype,
   # 0 means full susceptibility
   current_state   <- matrix(0, nrow = n_individuals, ncol = 4)
 
-  res_ind <- integer(0)
-  res_age <- integer(0)
-  res_st  <- integer(0)
+  res_ind <- vector("list", final_age)
+  res_age <- vector("list", final_age)
+  res_st  <- vector("list", final_age)
 
   for(i in 1:final_age) # years
   {
     #-----Loss of immunity------------------------------------------------------
     current_state <- current_state - loss_rate
-    current_state[current_state < 0] <- 0
+    truncate_at_zero(current_state)
     #---------------------------------------------------------------------------
 
     sus_lvl   <- 1 - current_state
@@ -72,7 +72,7 @@ simulate_DENV_infections_since_birth <- function(lambda_serotype,
 
     infected <- stats::runif(n_individuals) < p_any_inf
 
-    idx <- which(infected == 1)
+    idx <- which(infected)
 
     n_infected <- length(idx)
 
@@ -92,15 +92,16 @@ simulate_DENV_infections_since_birth <- function(lambda_serotype,
       coord                <- cbind(idx, st)
       current_state[coord] <- 1
 
-      res_ind <- c(res_ind, idx)
-      res_age <- c(res_age, rep.int(i, n_infected))
-      res_st  <- c(res_st, st)
+      res_ind[[i]] <- idx
+      res_age[[i]] <- rep.int(i, length(idx))
+      res_st[[i]]  <- st
     }
   }
 
-  data.frame(infected_ind = res_ind,
-             age          = res_age,
-             serotype     = res_st)
+  data.frame(
+    infected_ind = unlist(res_ind, use.names = FALSE),
+    age          = unlist(res_age, use.names = FALSE),
+    serotype     = unlist(res_st,  use.names = FALSE))
 }
 
 #' Simulate dengue infection outcomes for an existing cohort data frame

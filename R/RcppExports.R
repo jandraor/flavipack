@@ -5,3 +5,7 @@ simulate_DENV_long_decay_titres_cpp <- function(inf_times_list, decay_rate_vec, 
     .Call(`_flavipack_simulate_DENV_long_decay_titres_cpp`, inf_times_list, decay_rate_vec, log_first_peak, phi, beta, final_age)
 }
 
+truncate_at_zero <- function(x) {
+    invisible(.Call(`_flavipack_truncate_at_zero`, x))
+}
+

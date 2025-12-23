@@ -26,9 +26,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// truncate_at_zero
+void truncate_at_zero(NumericMatrix& x);
+RcppExport SEXP _flavipack_truncate_at_zero(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix& >::type x(xSEXP);
+    truncate_at_zero(x);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_flavipack_simulate_DENV_long_decay_titres_cpp", (DL_FUNC) &_flavipack_simulate_DENV_long_decay_titres_cpp, 6},
+    {"_flavipack_truncate_at_zero", (DL_FUNC) &_flavipack_truncate_at_zero, 1},
     {NULL, NULL, 0}
 };
 
