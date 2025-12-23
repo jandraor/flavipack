@@ -99,9 +99,9 @@ simulate_DENV_infections_since_birth <- function(lambda_serotype,
   }
 
   data.frame(
-    infected_ind = unlist(res_ind, use.names = FALSE),
-    age          = unlist(res_age, use.names = FALSE),
-    serotype     = unlist(res_st,  use.names = FALSE))
+    subject_id = unlist(res_ind, use.names = FALSE),
+    age        = unlist(res_age, use.names = FALSE),
+    serotype   = unlist(res_st,  use.names = FALSE))
 }
 
 #' Simulate dengue infection outcomes for an existing cohort data frame
@@ -152,10 +152,10 @@ simulate_DENV_infections_cohort <- function(lambda_serotype, loss_rate,
 
   if(is.character(subject_ids))
   {
-    sim_inf$infected_ind <- subject_ids[sim_inf$infected_ind]
+    sim_inf$infected_ind <- subject_ids[sim_inf$subject_id]
   }
 
-  sim_inf$key <- paste(sim_inf$infected_ind, sim_inf$age, sep = "_")
+  sim_inf$key <- paste(sim_inf$subject_id, sim_inf$age, sep = "_")
 
   cohort_df$infection <- cohort_df$key %in% sim_inf$key
 

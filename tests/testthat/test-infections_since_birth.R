@@ -11,7 +11,7 @@ test_that("simulate_DENV_infections_since_birth() works",
 
   expect_equal(
     colnames(sim_df),
-    c("infected_ind", "age", "serotype")
+    c("subject_id", "age", "serotype")
   )
 })
 
