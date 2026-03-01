@@ -1,19 +1,19 @@
 #' Simulate yearly dengue infections for a cohort from birth
 #'
 #' This function simulates annual infections with four dengue serotypes for a
-#' cohort of individuals followed from birth up to a specified end year.
-#' Individuals begin fully susceptible to all serotypes. Each year immunity
-#' wanes, serotype-specific infection probabilities are calculated using a
-#' shared force of infection, infection events are drawn, collision events
-#' (multiple simultaneous serotype infections) are resolved, and immunity is
-#' updated. The function returns a data frame of all infection events.
+#' cohort of individuals followed from birth up to a specified maximum age.
+#' Individuals begin fully susceptible to all serotypes. Each year immunity to
+#' homotypic reinfection declines wanes, infection events are drawn using a
+#' shared force of infection, collision events (multiple serotypes competing to
+#' be the infecting serotype) are resolved, and immunity is updated. The
+#' function returns a data frame of all infection events.
 #'
-#' @param lambda_serotype Numeric scalar. The force of infection parameter used
-#'   for each of the four serotypes. Higher values imply a higher risk of
-#'   infection.
+#' @param lambda_serotype Numeric scalar or numeric vector. If scalar, a
+#'   constant force of infection (FOI) is used for all years. If a vector,
+#'   \code{lambda_serotype[t]} gives the FOI in calendar year \code{t}.
 #'
 #' @param loss_rate Numeric scalar. Annual rate at which immunity to each
-#'   serotype wanes. This value is subtracted from immunity each year and
+#'   serotype declines. This value is subtracted from immunity each year and
 #'   truncated at zero. A value of 0 corresponds to full susceptibility.
 #'
 #' @param n_individuals Integer. Number of individuals in the simulated cohort.
@@ -21,10 +21,21 @@
 #' @param final_age Integer. Total number of simulated years (i.e., the maximum
 #'   age tracked in the simulation).
 #'
+#' @param r_i Numeric vector of length \code{n_individuals} or \code{NULL}.
+#'   Individual-level multiplicative risk (frailty) that scales the force of
+#'   infection. If \code{NULL}, all individuals have \code{r_i = 1}.
+#'
+#' @param birth_index Integer vector of length \code{n_individuals} or
+#'   \code{NULL}. Birth-year index used to map age to calendar year when
+#'   \code{lambda_serotype} is time-varying. For an individual at age
+#'   \code{a}, the FOI index is \code{birth_index + a}. Required when
+#'   \code{lambda_serotype} has length greater than 1.
+#'
 #' @return A data frame with one row per infection event and columns:
 #'   \itemize{
-#'     \item \code{age}: The year of infection (1 to \code{end_year}).
-#'     \item \code{infected_ind}: ID of the infected individual.
+#'     \item \code{subject_id}: ID of the infected individual.
+#'     \item \code{age}: Age (year) of infection (1 to \code{final_age}).
+#'     \item \code{serotype}: Infecting serotype (1--4).
 #'   }
 #'
 #' @details
@@ -35,9 +46,16 @@
 #'     \code{loss_rate}. Values are truncated to zero. Immunity is bounded in
 #'     \eqn{[0, 1]}; 0 means fully susceptible.
 #'
+#'   \item **Infection draw**: For each individual, the probability of infection
+#'     with any serotype is computed from the shared force of infection and the
+#'     sum of serotype-specific susceptibilities, scaled by \code{r_i}.
 #'
-#'   \item **Collision resolution**: If an individual draws infection from more
-#'     than one serotype, only one is kept, chosen uniformly at random.
+#'   \item **Collision resolution**: If more than one serotype is eligible to
+#'     cause infection (i.e., an individual has nonzero susceptibility to
+#'     multiple serotypes), exactly one serotype is retained.
+#'
+#'   \item **Serotype assignment**: Conditional on infection, exactly one
+#'     serotype is selected with probability proportional to susceptibility.
 #' }
 #'
 #' @examples
@@ -45,20 +63,51 @@
 #'   lambda_serotype = 0.1,
 #'   loss_rate       = 0.005,
 #'   n_individuals   = 5,
-#'   final_age       = 5)
+#'   final_age       = 5
+#' )
 #'
 #' @export
 simulate_DENV_infections_since_birth <- function(lambda_serotype,
                                                  loss_rate,
                                                  n_individuals,
-                                                 final_age)
+                                                 final_age,
+                                                 r_i = NULL,
+                                                 birth_index = NULL)
 {
+  if (is.null(r_i)) {
+    r_i <- rep.int(1, n_individuals)
+  } else if (length(r_i) != n_individuals) {
+    stop("r_i must be NULL or have length n_individuals.")
+  }
+
+  time_varying <- length(lambda_serotype) > 1L
+
+  if (time_varying)
+  {
+    if (is.null(birth_index)) {
+      stop("birth_index must be provided (length n_individuals) when lambda is time-varying.")
+    }
+    if (length(birth_index) != n_individuals) {
+      stop("birth_index must have length n_individuals.")
+    }
+
+    max_year_needed <- max(birth_index) + final_age
+
+    if (length(lambda_serotype) < max_year_needed) {
+      stop("lambda_serotype is too short: need length >= max(birth_index) + final_age.")
+    }
+  } else {
+    if (!is.null(birth_index))
+      stop("birth_index must be NULL when lambda_serotype is scalar.")
+  }
+
   # 0 means full susceptibility
   current_state   <- matrix(0, nrow = n_individuals, ncol = 4)
 
   res_ind <- vector("list", final_age)
   res_age <- vector("list", final_age)
   res_st  <- vector("list", final_age)
+
 
   for(i in 1:final_age) # years
   {
@@ -68,7 +117,14 @@ simulate_DENV_infections_since_birth <- function(lambda_serotype,
     #---------------------------------------------------------------------------
 
     sus_lvl   <- 1 - current_state
-    p_any_inf <- 1 - exp(-lambda_serotype * rowSums(sus_lvl))
+
+    if (time_varying) {
+      lambda_i <- lambda_serotype[birth_index + i]
+    } else {
+      lambda_i <- lambda_serotype
+    }
+
+    p_any_inf <- 1 - exp(- r_i * lambda_i * rowSums(sus_lvl))
 
     infected <- stats::runif(n_individuals) < p_any_inf
 

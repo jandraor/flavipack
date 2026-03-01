@@ -43,6 +43,21 @@ test_that("simulate_DENV_infections_since_birth() returns the expected value",
   expect_equal(actual, expected, tolerance = 1e-3)
 })
 
+test_that("simulate_DENV_infections_since_birth() handles heterogeneity",
+{
+  set.seed(123)
+
+  sim_df <- simulate_DENV_infections_since_birth(
+    lambda_serotype = 1,
+    loss_rate       = 0,
+    n_individuals   = 5,
+    final_age       = 5,
+    r_i             = c(1, 1, 1, 1, 0))
+
+  expect_equal(!(5 %in% sim_df$subject_id), TRUE)
+})
+
+#-------------------------------------------------------------------------------
 test_that("simulate_DENV_infections_cohort() handles character ids",
 {
   cohort_df <- data.frame(subject_id = c(rep("A", 3), rep("B", 2)),
