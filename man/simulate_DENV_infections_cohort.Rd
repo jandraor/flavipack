@@ -7,12 +7,12 @@
 simulate_DENV_infections_cohort(lambda_serotype, loss_rate, cohort_df)
 }
 \arguments{
-\item{lambda_serotype}{Numeric scalar. The force of infection parameter used
-for each of the four serotypes. Higher values imply a higher risk of
-infection.}
+\item{lambda_serotype}{Numeric scalar or numeric vector. If scalar, a
+constant force of infection (FOI) is used for all years. If a vector,
+\code{lambda_serotype[t]} gives the FOI in calendar year \code{t}.}
 
 \item{loss_rate}{Numeric scalar. Annual rate at which immunity to each
-serotype wanes. This value is subtracted from immunity each year and
+serotype declines. This value is subtracted from immunity each year and
 truncated at zero. A value of 0 corresponds to full susceptibility.}
 
 \item{cohort_df}{A data frame containing at least two columns:

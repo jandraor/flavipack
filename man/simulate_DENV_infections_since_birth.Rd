@@ -8,38 +8,51 @@ simulate_DENV_infections_since_birth(
   lambda_serotype,
   loss_rate,
   n_individuals,
-  final_age
+  final_age,
+  r_i = NULL,
+  birth_index = NULL
 )
 }
 \arguments{
-\item{lambda_serotype}{Numeric scalar. The force of infection parameter used
-for each of the four serotypes. Higher values imply a higher risk of
-infection.}
+\item{lambda_serotype}{Numeric scalar or numeric vector. If scalar, a
+constant force of infection (FOI) is used for all years. If a vector,
+\code{lambda_serotype[t]} gives the FOI in calendar year \code{t}.}
 
 \item{loss_rate}{Numeric scalar. Annual rate at which immunity to each
-serotype wanes. This value is subtracted from immunity each year and
+serotype declines. This value is subtracted from immunity each year and
 truncated at zero. A value of 0 corresponds to full susceptibility.}
 
 \item{n_individuals}{Integer. Number of individuals in the simulated cohort.}
 
 \item{final_age}{Integer. Total number of simulated years (i.e., the maximum
 age tracked in the simulation).}
+
+\item{r_i}{Numeric vector of length \code{n_individuals} or \code{NULL}.
+Individual-level multiplicative risk (frailty) that scales the force of
+infection. If \code{NULL}, all individuals have \code{r_i = 1}.}
+
+\item{birth_index}{Integer vector of length \code{n_individuals} or
+\code{NULL}. Birth-year index used to map age to calendar year when
+\code{lambda_serotype} is time-varying. For an individual at age
+\code{a}, the FOI index is \code{birth_index + a}. Required when
+\code{lambda_serotype} has length greater than 1.}
 }
 \value{
 A data frame with one row per infection event and columns:
   \itemize{
-    \item \code{age}: The year of infection (1 to \code{end_year}).
-    \item \code{infected_ind}: ID of the infected individual.
+    \item \code{subject_id}: ID of the infected individual.
+    \item \code{age}: Age (year) of infection (1 to \code{final_age}).
+    \item \code{serotype}: Infecting serotype (1--4).
   }
 }
 \description{
 This function simulates annual infections with four dengue serotypes for a
-cohort of individuals followed from birth up to a specified end year.
-Individuals begin fully susceptible to all serotypes. Each year immunity
-wanes, serotype-specific infection probabilities are calculated using a
-shared force of infection, infection events are drawn, collision events
-(multiple simultaneous serotype infections) are resolved, and immunity is
-updated. The function returns a data frame of all infection events.
+cohort of individuals followed from birth up to a specified maximum age.
+Individuals begin fully susceptible to all serotypes. Each year immunity to
+homotypic reinfection declines wanes, infection events are drawn using a
+shared force of infection, collision events (multiple serotypes competing to
+be the infecting serotype) are resolved, and immunity is updated. The
+function returns a data frame of all infection events.
 }
 \details{
 The simulation follows these steps each year:
@@ -49,9 +62,16 @@ The simulation follows these steps each year:
     \code{loss_rate}. Values are truncated to zero. Immunity is bounded in
     \eqn{[0, 1]}; 0 means fully susceptible.
 
+  \item **Infection draw**: For each individual, the probability of infection
+    with any serotype is computed from the shared force of infection and the
+    sum of serotype-specific susceptibilities, scaled by \code{r_i}.
 
-  \item **Collision resolution**: If an individual draws infection from more
-    than one serotype, only one is kept, chosen uniformly at random.
+  \item **Collision resolution**: If more than one serotype is eligible to
+    cause infection (i.e., an individual has nonzero susceptibility to
+    multiple serotypes), exactly one serotype is retained.
+
+  \item **Serotype assignment**: Conditional on infection, exactly one
+    serotype is selected with probability proportional to susceptibility.
 }
 }
 \examples{
@@ -59,6 +79,7 @@ simulate_DENV_infections_since_birth(
   lambda_serotype = 0.1,
   loss_rate       = 0.005,
   n_individuals   = 5,
-  final_age       = 5)
+  final_age       = 5
+)
 
 }
