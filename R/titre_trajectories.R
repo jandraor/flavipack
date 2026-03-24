@@ -148,13 +148,13 @@ simulate_observed_titres <- function(true_titre, measurement_error, LOD)
 #'                     temp_decay       = 0.003,
 #'                     treatment_group  = 0, # Placebo
 #'                     infection_times  = c(300, 900))
-simulate_true_titre_DENV<- function(sampling_times,
-                                    perm_rise,
-                                    temp_rise,
-                                    temp_decay,
-                                    treatment_group,
-                                    infection_times = NULL,
-                                    vac_times       = NULL)
+simulate_true_titre_DENV <- function(sampling_times,
+                                     perm_rise,
+                                     temp_rise,
+                                     temp_decay,
+                                     treatment_group,
+                                     infection_times = NULL,
+                                     vac_times       = NULL)
 {
   n_inf     <- length(infection_times)
   n_samples <- length(sampling_times)
@@ -167,7 +167,7 @@ simulate_true_titre_DENV<- function(sampling_times,
 
   for(i in seq_len(n_inf))
   {
-    idx             <- which(sampling_times > infection_times[[i]])
+    idx             <- which(sampling_times >= infection_times[[i]])
     times_after_inf <- sampling_times[idx]
 
     sim_titre <- titre_decay_floor(

@@ -152,6 +152,24 @@ test_that("simulate_true_titre() works",
   expect_equal(actual, expected)
 })
 
+test_that("simulate_true_titre_DENV() works",
+{
+  sampling_times <- c(537, 571, 627, 655, 808, 999, 1340, 1749, 2138)
+
+  actual <- simulate_true_titre_DENV(
+    sampling_times = sampling_times,
+    perm_rise  = 5,
+    temp_rise  = 0.9,
+    temp_decay = 0.001,
+    infection_times = 537)
+
+  sim_times <- sampling_times - min(sampling_times)
+
+  expected <- 5 + 0.9 * exp(-0.001 * sim_times)
+
+  expect_equal(actual, expected)
+})
+
 
 #simulate_titres_seropositive---------------------------------------------------
 
