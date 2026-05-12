@@ -2,57 +2,67 @@
 % Please edit documentation in R/titre_trajectories.R
 \name{simulate_true_titre_DENV}
 \alias{simulate_true_titre_DENV}
-\title{Simulate true titres}
+\title{Simulate true log antibody titres for DENV}
 \usage{
 simulate_true_titre_DENV(
   sampling_times,
-  perm_rise,
-  temp_rise,
-  temp_decay,
-  treatment_group,
-  infection_times = NULL,
-  vac_times = NULL
+  peaks,
+  perm_rises,
+  decays,
+  baseline,
+  exposure_times = NULL
 )
 }
 \arguments{
-\item{sampling_times}{Numeric vector of sampling times (in days) relative to
+\item{sampling_times}{Numeric vector of sampling times, in days relative to
 the start of the study.}
 
-\item{perm_rise}{Numeric scalar. Permanent rise in titre following an
-infection. It must have the same length as the number of infections.}
+\item{peaks}{Numeric vector of peak titres immediately after each exposure.
+Must have the same length as `exposure_times`.}
 
-\item{temp_rise}{Numeric scalar. Initial temporary rise in titre
-following an infection. It must have the same length as the number of
-infections.}
+\item{perm_rises}{Numeric vector of long-term plateau titre values following
+each exposure. Must have the same length as `exposure_times`.}
 
-\item{temp_decay}{Numeric scalar. Decay rate of the temporary titre rise.}
+\item{decays}{Numeric vector of decay rates. Must have the same length as
+`exposure_times`.}
 
-\item{treatment_group}{Integer (0 or 1) indicating treatment group.
-(0 = Placebo, 1 = Vaccine).}
+\item{baseline}{Numeric scalar baseline titre level added to all time points.}
 
-\item{infection_times}{Numeric vector of times of infection events relative
-to enrolment. Defaults to `NULL` if no infections.}
-
-\item{vac_times}{Numeric vector of times of vaccination events relative to
-enrolment. Defaults to `NULL` if no vaccinations.}
+\item{exposure_times}{Numeric vector of exposure times relative to enrolment.
+Exposures refer to infections and vaccinations. Defaults to `NULL` if no exposures.}
 }
 \value{
 A numeric vector of length equal to \code{sampling_times},
- containing simulated log antibody titre values.
+containing simulated **true log antibody titre values**.
 }
 \description{
-This function generates simulated log-transformed antibody titre values
-at specified sampling times, given infection (and potentially vaccination)
-events and immune response parameters. This function assumes that the
-individual is seronegative at time 0. Time 0 can represent the start of a
-study or the time at which the individual became susceptible.
+This function generates simulated **true (noise-free)** log-transformed
+antibody titre values at specified sampling times, given infection events
+and immune response parameters.
+}
+\details{
+It uses the same parameterisation as \code{\link{simulate_titre_trajectory}},
+but returns only the underlying true trajectory (no measurement error,
+no limit of detection).
+
+Each infection contributes a rise that starts at a peak value and decays
+exponentially toward a permanent level:
+
+\deqn{titre(t) = perm\_rise + (peak - perm\_rise) * exp(-decay * t)}
+
+The total titre at each time point is the sum over all infections plus
+a baseline level.
 }
 \examples{
-sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
-simulate_true_titre(sampling_times   = sampling_times,
-                    perm_rise        = 6,
-                    temp_rise        = 2,
-                    temp_decay       = 0.003,
-                    treatment_group  = 0, # Placebo
-                    infection_times  = c(300, 900))
+sampling_times <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
+
+simulate_true_titre_DENV(
+  sampling_times  = sampling_times,
+  peaks           = c(8, 7),
+  perm_rises      = c(4, 3.5),
+  decays          = c(0.003, 0.002),
+  baseline        = 2,
+  treatment_group = 0,
+  exposure_times = c(300, 900)
+)
 }

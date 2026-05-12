@@ -6,42 +6,40 @@
 \usage{
 simulate_titre_trajectory(
   sampling_times,
-  treatment_group,
   subject_id,
-  perm_rise = NULL,
-  temp_rise = NULL,
-  temp_decay = NULL,
+  peaks = NULL,
+  perm_rises = NULL,
+  decays = NULL,
+  baseline,
   meas_sd,
-  infection_times = NULL,
-  vac_times = NULL
+  exposure_times = NULL,
+  LOD = 1
 )
 }
 \arguments{
-\item{sampling_times}{Numeric vector of sampling times (in days) relative to
+\item{sampling_times}{Numeric vector of sampling times, in days relative to
 the start of the study.}
 
-\item{treatment_group}{Integer (0 or 1) indicating treatment group.
-(0 = Placebo, 1 = Vaccine).}
+\item{subject_id}{Subject identifier.}
 
-\item{subject_id}{Identifier for the subject (numeric or character).}
+\item{peaks}{Numeric vector of peak titres immediately after each exposure.
+Must have the same length as `exposure_times`.}
 
-\item{perm_rise}{Numeric scalar. Permanent rise in titre following an
-infection. It must have the same length as the number of infections.}
+\item{perm_rises}{Numeric vector of long-term plateau titre values following
+each exposure. Must have the same length as `exposure_times`.}
 
-\item{temp_rise}{Numeric scalar. Initial temporary rise in titre
-following an infection. It must have the same length as the number of
-infections.}
+\item{decays}{Numeric vector of decay rates. Must have the same length as
+`exposure_times`.}
 
-\item{temp_decay}{Numeric scalar. Decay rate of the temporary titre rise.}
+\item{baseline}{Numeric scalar baseline titre level added to all time points.}
 
-\item{meas_sd}{A non-negative real value that corresponds to the standard
-deviation of a normal measurement model of log titres.}
+\item{meas_sd}{Non-negative numeric scalar. Standard deviation of the normal
+measurement model for log titres.}
 
-\item{infection_times}{Numeric vector of times of infection events relative
-to enrolment. Defaults to `NULL` if no infections.}
+\item{exposure_times}{Numeric vector of exposure times relative to enrolment.
+Exposures refer to infections and vaccinations. Defaults to `NULL` if no exposures.}
 
-\item{vac_times}{Numeric vector of times of vaccination events relative to
-enrolment. Defaults to `NULL` if no vaccinations.}
+\item{LOD}{Numeric scalar limit of detection.}
 }
 \value{
 A `data.frame` with columns:
@@ -54,18 +52,21 @@ A `data.frame` with columns:
 }
 \description{
 Generates a simulated time course of true and measured antibody titres
-for an individual, given sampling times, infection/vaccination events,
-and baseline serostatus. The function applies a rise-and-decay model
-with measurement error and limit of detection.
+for an individual, given sampling times, and infection/vaccination events
+(exposures). The function applies a rise-and-decay model
+with measurement error and a limit of detection.
 }
 \examples{
-sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
-simulate_titre_trajectory(sampling_times   = sampling_times,
-                          treatment_group  = 0, # Placebo
-                          subject_id       = 1,
-                          infection_times  = c(300, 900),
-                          perm_rise        = 6,
-                          temp_rise        = 2,
-                          temp_decay       = 0.003,
-                          meas_sd          = 0.3)
+sampling_times <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
+simulate_titre_trajectory(
+  sampling_times  = sampling_times,
+  treatment_group = 0,
+  subject_id      = 1,
+  exposure_times  = c(300, 900),
+  peaks           = c(8, 8),
+  perm_rises      = c(6, 6),
+  decays          = c(0.003, 0.003),
+  baseline        = 0,
+  meas_sd         = 0.3
+)
 }

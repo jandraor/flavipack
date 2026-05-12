@@ -3,16 +3,15 @@ test_that("simulate_titre_trajectory() works", {
   subject_id      <- 1
   inf_times       <- 1047.108
   sampling_times  <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
-  treatment_group <- 0 # Placebo
 
   actual <- simulate_titre_trajectory(sampling_times,
-                                      treatment_group,
                                       subject_id      = subject_id,
-                                      infection_times = inf_times,
-                                      perm_rise   = 1,
-                                      temp_rise   = 2,
-                                      temp_decay  = 0.003,
-                                      meas_sd     = 0.3)
+                                      exposure_times  = inf_times,
+                                      peaks           = 3,
+                                      perm_rises      = 1,
+                                      decays          = 0.003,
+                                      baseline        = 0,
+                                      meas_sd         = 0.3)
 
   expected <- data.frame(subject_id = subject_id,
                          time       = sampling_times,
@@ -27,25 +26,25 @@ test_that("simulate_titre_trajectory() works", {
 
   inf_times <- c(300, 900)
 
+  peak_pri      <- 3
   perm_rise_pri <- 1
-  temp_rise_pri <- 2
+
+  peak_sec      <- 5
   perm_rise_sec <- 2
-  temp_rise_sec <- 3
 
   temp_decay <- 0.003
 
   actual <- simulate_titre_trajectory(sampling_times,
-                                      treatment_group,
                                       subject_id      = subject_id,
-                                      infection_times = inf_times,
-                                      perm_rise       = c(perm_rise_pri,
+                                      exposure_times  = inf_times,
+                                      peaks           = c(peak_pri,
+                                                          peak_sec),
+                                      perm_rises      = c(perm_rise_pri,
                                                           perm_rise_sec),
-                                      temp_rise       = c(temp_rise_pri,
-                                                          temp_rise_sec),
-                                      temp_decay      = c(temp_decay,
+                                      decays          = c(temp_decay,
                                                           temp_decay),
+                                      baseline        = 0,
                                       meas_sd         = 0.3)
-
   titre_matrix <- matrix(0,
                          nrow = length(inf_times),
                          ncol = length(sampling_times))
@@ -54,18 +53,18 @@ test_that("simulate_titre_trajectory() works", {
   times_1st <- sampling_times[idx_1st]
 
   titre_matrix[1, idx_1st] <- titre_decay_floor(
-    par_alpha = perm_rise_pri,
-    par_beta  = temp_rise_pri,
-    par_delta = temp_decay,
+    peak      = peak_pri,
+    perm_rise = perm_rise_pri,
+    decay     = temp_decay,
     time      = times_1st - inf_times[[1]])
 
   idx_2nd   <- which(sampling_times > inf_times[[2]])
   times_2nd <- sampling_times[idx_2nd]
 
   titre_matrix[2, idx_2nd] <- titre_decay_floor(
-    par_alpha = perm_rise_sec,
-    par_beta  = temp_rise_sec,
-    par_delta = temp_decay,
+    peak      = peak_sec,
+    perm_rise = perm_rise_sec,
+    decay     = temp_decay,
     time      = times_2nd - inf_times[[2]])
 
   true_titre <- colSums(titre_matrix)
@@ -85,9 +84,9 @@ test_that("simulate_titre_trajectory() handles no infections",
 
   actual <- simulate_titre_trajectory(
     sampling_times  = sampling_times ,
-    treatment_group = 0,
     subject_id      = 1,
-    infection_times = numeric(0),
+    baseline        = 0,
+    exposure_times  = numeric(0),
     meas_sd         = 0.3)
 
   expected <- data.frame(subject_id = 1,
@@ -106,24 +105,25 @@ test_that("simulate_true_titre() works",
 
   inf_times <-c(300, 900)
 
+  peak_pri      <- 3
   perm_rise_pri <- 1
-  temp_rise_pri <- 2
 
+  peak_sec <- 5
   perm_rise_sec <- 2
-  temp_rise_sec <- 3
+
 
   temp_decay    <- 0.003
 
   actual <- simulate_true_titre_DENV(
     sampling_times   = sampling_times,
-    perm_rise       = c(perm_rise_pri,
-                        perm_rise_sec),
-    temp_rise       = c(temp_rise_pri,
-                        temp_rise_sec),
-    temp_decay       = c(temp_decay,
+    peaks            = c(peak_pri,
+                         peak_sec),
+    perm_rises       = c(perm_rise_pri,
+                         perm_rise_sec),
+    decays           = c(temp_decay,
                          temp_decay),
-    treatment_group  = 0, # Placebo
-    infection_times  = inf_times)
+    baseline         = 0,
+    exposure_times   = inf_times)
 
   titre_matrix <- matrix(0,
                          nrow = length(inf_times),
@@ -133,18 +133,18 @@ test_that("simulate_true_titre() works",
   times_1st <- sampling_times[idx_1st]
 
   titre_matrix[1, idx_1st] <- titre_decay_floor(
-    par_alpha = perm_rise_pri,
-    par_beta  = temp_rise_pri,
-    par_delta = temp_decay,
+    perm_rise = perm_rise_pri,
+    peak      = peak_pri,
+    decay     = temp_decay,
     time      = times_1st - inf_times[[1]])
 
   idx_2nd   <- which(sampling_times > inf_times[[2]])
   times_2nd <- sampling_times[idx_2nd]
 
   titre_matrix[2, idx_2nd] <- titre_decay_floor(
-    par_alpha = perm_rise_sec,
-    par_beta  = temp_rise_sec,
-    par_delta = temp_decay,
+    perm_rise = perm_rise_sec,
+    peak      = peak_sec,
+    decay     = temp_decay,
     time      = times_2nd - inf_times[[2]])
 
   expected <- colSums(titre_matrix)
@@ -158,14 +158,47 @@ test_that("simulate_true_titre_DENV() works",
 
   actual <- simulate_true_titre_DENV(
     sampling_times = sampling_times,
-    perm_rise  = 5,
-    temp_rise  = 0.9,
-    temp_decay = 0.001,
-    infection_times = 537)
+    perm_rises = 5,
+    peaks      = 5.9,
+    decays     = 0.001,
+    baseline   = 0,
+    exposure_times = 537)
 
   sim_times <- sampling_times - min(sampling_times)
 
   expected <- 5 + 0.9 * exp(-0.001 * sim_times)
+
+  expect_equal(actual, expected)
+})
+
+test_that("simulate_true_titre_DENV() adds the baseline",
+{
+  sampling_times <- c(100, 200, 300)
+
+  actual <- simulate_true_titre_DENV(sampling_times  = sampling_times,
+                                     peaks           = 6,
+                                     perm_rises      = 2,
+                                     decays          = 0.01,
+                                     baseline        = 3,
+                                     exposure_times  = 150)
+
+  expected <- c(3, 5 + 4 * exp(-0.01 * c(50, 150)))
+
+  expect_equal(actual, expected)
+})
+
+test_that("simulate_true_titre_DENV() returns the baseline with no infections",
+{
+  sampling_times <- c(100, 200, 300)
+
+  actual <- simulate_true_titre_DENV(sampling_times = sampling_times,
+                                     peaks           = numeric(0),
+                                     perm_rises      = numeric(0),
+                                     decays          = numeric(0),
+                                     baseline        = 3,
+                                     exposure_times = numeric(0))
+
+  expected <- c(3, 3, 3)
 
   expect_equal(actual, expected)
 })
@@ -188,25 +221,25 @@ test_that("simulate_titres_seropositive() works",
 
   sampling_times_sbs <- sampling_times_rel_to_last_birthday  + 365 * (age - 1)
 
+  peak_pri      <- 3
   perm_rise_pri <- 1
-  temp_rise_pri <- 2
-  perm_rise_sec <- 2
-  temp_rise_sec <- 3
 
-  temp_decay <- 0.003
+  peak_sec      <- 5
+  perm_rise_sec <- 2
+
+  decay <- 0.003
 
   actual <- simulate_titres_seropositive(inf_times_sbs   = inf_times_sbs,
                                         sampling_times  = sampling_times,
                                         age             = age,
                                         subject_id      = 3,
-                                        treatment_group = 0,
-                                        perm_rise       = c(perm_rise_pri,
+                                        peaks           = c(peak_pri,
+                                                            peak_sec,
+                                                            peak_sec),
+                                        perm_rises      = c(perm_rise_pri,
                                                             perm_rise_sec,
                                                             perm_rise_sec),
-                                        temp_rise       = c(temp_rise_pri,
-                                                            temp_rise_sec,
-                                                            temp_rise_sec),
-                                        temp_decay      = rep(0.003, 3),
+                                        decays          = rep(decay, 3),
                                         meas_sd         = 0.3)
 
   titre_matrix <- matrix(0, nrow = length(inf_times),
@@ -216,27 +249,27 @@ test_that("simulate_titres_seropositive() works",
   times_1st <- sampling_times_sbs[idx_1st]
 
   titre_matrix[1, idx_1st] <- titre_decay_floor(
-    par_alpha = perm_rise_pri,
-    par_beta  = temp_rise_pri,
-    par_delta = temp_decay,
+    peak      = peak_pri,
+    perm_rise = perm_rise_pri,
+    decay     = decay,
     time      = times_1st - inf_times[[1]])
 
   idx_2nd   <- which(sampling_times_sbs > inf_times[[2]])
   times_2nd <- sampling_times_sbs[idx_2nd]
 
   titre_matrix[2, idx_2nd] <- titre_decay_floor(
-    par_alpha = perm_rise_sec,
-    par_beta  = temp_rise_sec,
-    par_delta = temp_decay,
+    peak      = peak_sec,
+    perm_rise = perm_rise_sec,
+    decay     = decay,
     time      = times_2nd - inf_times[[2]])
 
   idx_3rd   <- which(sampling_times_sbs > inf_times[[3]])
   times_3rd <- sampling_times_sbs[idx_3rd]
 
   titre_matrix[3, idx_3rd] <- titre_decay_floor(
-    par_alpha = perm_rise_sec,
-    par_beta  = temp_rise_sec,
-    par_delta = temp_decay,
+    peak      = peak_sec,
+    perm_rise = perm_rise_sec,
+    decay     = decay,
     time      = times_3rd - inf_times[[3]])
 
   true_titre <- colSums(titre_matrix)
@@ -248,71 +281,4 @@ test_that("simulate_titres_seropositive() works",
   expect_equal(actual[, 1:3], expected)
 
   expect_equal("meas" %in% colnames(actual), TRUE)
-})
-
-test_that("simulate_titres_from_enrolment() works",
-{
-  infection_times <- NULL
-
-  sampling_times <- c(537, 571, 627, 655, 808, 999, 1340, 1749, 2138)
-
-  perm_rise  <- 6
-  temp_rise  <- 2
-  temp_decay <- 0.003
-
-  actual <- simulate_titres_from_enrolment(infection_times, sampling_times,
-                                             perm_rise, temp_rise, temp_decay,
-                                             baseline = 6)
-
-  expected <- rep(6, 9)
-
-  expect_equal(actual, expected)
-
-  infection_times <- 700
-
-  actual <- simulate_titres_from_enrolment(infection_times, sampling_times,
-                                           perm_rise, temp_rise, temp_decay,
-                                           baseline = 6)
-
-  after_1st_inf <- titre_decay_floor(perm_rise, temp_rise, temp_decay,
-                                     sampling_times[5:9] - infection_times)
-
-
-  expected <- c(rep(6, 4), after_1st_inf)
-
-  expect_equal(actual, expected)
-
-  #=============================================================================
-
-  infection_times <- c(700, 1400)
-
-  actual <- simulate_titres_from_enrolment(infection_times, sampling_times,
-                                           perm_rise, temp_rise, temp_decay,
-                                           baseline = 7)
-
-  before_first_inf <- titre_decay_floor(
-    par_alpha = perm_rise,
-    par_beta  = 7 - perm_rise,
-    par_delta = temp_decay,
-    time      = c(sampling_times[1:4], infection_times[[1]]) -
-      sampling_times[[1]])
-
-  after_1st_inf <- titre_decay_floor(
-    par_alpha = perm_rise,
-    par_beta  = before_first_inf[[5]] - perm_rise + temp_rise,
-    par_delta = temp_decay,
-    time      = c(sampling_times[5:7], infection_times[[2]]) -
-      infection_times[[1]])
-
-  after_2nd_inf <- titre_decay_floor(
-    par_alpha = perm_rise,
-    par_beta  = after_1st_inf[[4]] - perm_rise + temp_rise,
-    par_delta = temp_decay,
-    time      = sampling_times[8:9] - infection_times[[2]])
-
-  expected <- c(before_first_inf[1:4],
-                after_1st_inf[1:3],
-                after_2nd_inf)
-
-  expect_equal(actual, expected)
 })

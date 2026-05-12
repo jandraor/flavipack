@@ -9,10 +9,9 @@ simulate_titres_seropositive(
   sampling_times,
   age,
   subject_id,
-  treatment_group,
-  perm_rise,
-  temp_rise,
-  temp_decay,
+  peaks,
+  perm_rises,
+  decays,
   meas_sd
 )
 }
@@ -20,28 +19,25 @@ simulate_titres_seropositive(
 \item{inf_times_sbs}{Numeric vector of infection times (in days) relative to
 day the individual became susceptible.}
 
-\item{sampling_times}{Numeric vector of sampling times (in days) relative to
+\item{sampling_times}{Numeric vector of sampling times, in days relative to
 the start of the study.}
 
 \item{age}{Numeric. Age of the individual at the time of the first sample
 (in years).}
 
-\item{subject_id}{Identifier for the subject (numeric or character).}
+\item{subject_id}{Subject identifier.}
 
-\item{treatment_group}{Integer (0 or 1) indicating treatment group.
-(0 = Placebo, 1 = Vaccine).}
+\item{peaks}{Numeric vector of peak titres immediately after each exposure.
+Must have the same length as `exposure_times`.}
 
-\item{perm_rise}{Numeric scalar. Permanent rise in titre following an
-infection. It must have the same length as the number of infections.}
+\item{perm_rises}{Numeric vector of long-term plateau titre values following
+each exposure. Must have the same length as `exposure_times`.}
 
-\item{temp_rise}{Numeric scalar. Initial temporary rise in titre
-following an infection. It must have the same length as the number of
-infections.}
+\item{decays}{Numeric vector of decay rates. Must have the same length as
+`exposure_times`.}
 
-\item{temp_decay}{Numeric scalar. Decay rate of the temporary titre rise.}
-
-\item{meas_sd}{A non-negative real value that corresponds to the standard
-deviation of a normal measurement model of log titres.}
+\item{meas_sd}{Non-negative numeric scalar. Standard deviation of the normal
+measurement model for log titres.}
 }
 \value{
 A data frame containing simulated titre values across the specified

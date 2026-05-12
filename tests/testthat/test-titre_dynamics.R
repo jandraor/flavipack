@@ -1,7 +1,6 @@
 test_that("titre_decay_floor() works", {
 
-  actual <- titre_decay_floor(par_alpha = 1, par_beta = 2, par_delta = 0.02,
-                              time = 100)
+  actual <- titre_decay_floor(peak = 3, perm_rise = 1, decay = 0.02, time = 100)
 
   expected <- 1 + 2 * exp(-0.02 * 100)
 

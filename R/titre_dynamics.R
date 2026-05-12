@@ -60,28 +60,30 @@ simulate_DENV_long_decay_titres <- function(inf_times_list,
 
 #' Exponential antibody titre dynamics with a lower bound
 #'
-#' This function models antibody titre dynamics following infection or vaccination,
-#' assuming an exponential decay from a peak towards a permanent baseline level.
-#' The titre value starts at \code{par_alpha + par_beta} and decays exponentially
-#' at rate \code{par_delta}, asymptotically approaching the lower bound \code{par_alpha}.
+#' This function models antibody titre dynamics following infection,
+#' assuming an exponential decay from an initial peak towards a
+#' long-term plateau (permanent rise) in the log scale.
 #'
-#' @param par_alpha Numeric scalar. Permanent baseline (lower bound) of the antibody titre.
-#' @param par_beta Numeric scalar. Temporary rise above the baseline immediately after infection.
-#' @param par_delta Numeric scalar. Decay rate controlling how quickly titres return to baseline.
-#' @param time Numeric vector. Time points at which to evaluate titres.
+#' The titre starts at \code{peak} when \code{time = 0} and decays
+#' exponentially at rate \code{decay}, asymptotically approaching
+#' \code{perm_rise}.
+#'
+#' @param peak Numeric scalar. Peak titre immediately after infection.
+#' @param perm_rise Numeric scalar. Long-term plateau (asymptotic titre level).
+#' @param decay Numeric scalar. Decay rate controlling how quickly titres decline.
+#' @param time Numeric vector. Time since infection at which to evaluate titres.
 #'
 #' @returns A numeric vector of titre values corresponding to each time point.
 #' @export
 #'
 #' @examples
-#' # Example: 3-year decay from a peak titre back to baseline
 #' titre_decay_floor(
-#'   par_alpha = 6,
-#'   par_beta  = 2,
-#'   par_delta = 0.003,
+#'   peak      = 8,
+#'   perm_rise = 6,
+#'   decay     = 0.003,
 #'   time      = seq(0, 365 * 3)
 #' )
-titre_decay_floor <- function(par_alpha, par_beta, par_delta, time)
+titre_decay_floor <- function(peak, perm_rise, decay, time)
 {
-  par_alpha + par_beta * exp(-par_delta * time)
+  perm_rise + (peak - perm_rise) * exp(-decay * time)
 }

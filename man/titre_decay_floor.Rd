@@ -4,32 +4,35 @@
 \alias{titre_decay_floor}
 \title{Exponential antibody titre dynamics with a lower bound}
 \usage{
-titre_decay_floor(par_alpha, par_beta, par_delta, time)
+titre_decay_floor(peak, perm_rise, decay, time)
 }
 \arguments{
-\item{par_alpha}{Numeric scalar. Permanent baseline (lower bound) of the antibody titre.}
+\item{peak}{Numeric scalar. Peak titre immediately after infection.}
 
-\item{par_beta}{Numeric scalar. Temporary rise above the baseline immediately after infection.}
+\item{perm_rise}{Numeric scalar. Long-term plateau (asymptotic titre level).}
 
-\item{par_delta}{Numeric scalar. Decay rate controlling how quickly titres return to baseline.}
+\item{decay}{Numeric scalar. Decay rate controlling how quickly titres decline.}
 
-\item{time}{Numeric vector. Time points at which to evaluate titres.}
+\item{time}{Numeric vector. Time since infection at which to evaluate titres.}
 }
 \value{
 A numeric vector of titre values corresponding to each time point.
 }
 \description{
-This function models antibody titre dynamics following infection or vaccination,
-assuming an exponential decay from a peak towards a permanent baseline level.
-The titre value starts at \code{par_alpha + par_beta} and decays exponentially
-at rate \code{par_delta}, asymptotically approaching the lower bound \code{par_alpha}.
+This function models antibody titre dynamics following infection,
+assuming an exponential decay from an initial peak towards a
+long-term plateau (permanent rise) in the log scale.
+}
+\details{
+The titre starts at \code{peak} when \code{time = 0} and decays
+exponentially at rate \code{decay}, asymptotically approaching
+\code{perm_rise}.
 }
 \examples{
-# Example: 3-year decay from a peak titre back to baseline
 titre_decay_floor(
-  par_alpha = 6,
-  par_beta  = 2,
-  par_delta = 0.003,
+  peak      = 8,
+  perm_rise = 6,
+  decay     = 0.003,
   time      = seq(0, 365 * 3)
 )
 }
