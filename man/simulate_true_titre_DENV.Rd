@@ -62,7 +62,6 @@ simulate_true_titre_DENV(
   perm_rises      = c(4, 3.5),
   decays          = c(0.003, 0.002),
   baseline        = 2,
-  treatment_group = 0,
   exposure_times = c(300, 900)
 )
 }

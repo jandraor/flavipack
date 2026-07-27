@@ -14,6 +14,11 @@ simulate_DENV_long_decay_titres(
 )
 }
 \arguments{
+\item{inf_times_list}{A list of integer vectors, one element per simulated
+subject, each giving the ages at which that subject's infections occur.
+Times are assumed to be sorted ascending and to lie within
+\code{1:final_age}. Subjects with no infections stay at baseline.}
+
 \item{decay_rate_vec}{Numeric vector of decay rates for each infection. The
 i-th element is used for the i-th infection; if more than four infections
 occur, the fourth element is reused for subsequent infections.}
@@ -21,40 +26,43 @@ occur, the fourth element is reused for subsequent infections.}
 \item{log_first_peak}{Numeric. Log2-scale peak antibody titre of the first
 infection.}
 
-\item{phi}{Numeric. Asymptotic maximum proportional boost for reinfections,
-relative to the first infection peak. For example, \code{phi = 0.5} means
-that at saturation the peak titre can increase by up to 50% over the first
-peak.}
+\item{phi}{Numeric. Asymptotic log2 peak titre approached over successive
+infections, on the same scale as \code{log_first_peak}. The peak for the
+i-th infection (i > 1) is
+\code{phi - (phi - log_first_peak) * exp(-beta * (i - 1))}, so peaks rise
+towards \code{phi} when \code{phi > log_first_peak} and fall towards it
+otherwise.}
 
-\item{beta}{Numeric. Saturation rate controlling how quickly the boost
-approaches \code{phi} with successive reinfections.}
+\item{beta}{Numeric. Saturation rate controlling how quickly the peak
+approaches \code{phi} with successive reinfections. Larger values saturate
+sooner.}
 
-\item{final_age}{Integer. Final age/time index to simulate to; titres will
-be returned for ages 1:\code{final_age}.}
-
-\item{inf_times}{Integer vector of ages at which infections occur.}
-
-\item{subject_id}{Integer or character. Identifier for the simulated subject.}
+\item{final_age}{Integer. Final age/time index to simulate to; titres are
+returned for ages 1:\code{final_age}.}
 }
 \value{
-A data frame with columns:
-\describe{
-  \item{subject_id}{Subject identifier.}
-  \item{age}{Integer ages from 1 to \code{final_age}.}
-  \item{titre}{Simulated antibody titre at each age.}
-}
+A numeric matrix with \code{length(inf_times_list)} rows and
+  \code{final_age} columns, without dimnames. Row \code{i} corresponds to
+  the i-th element of \code{inf_times_list} and column \code{j} to age
+  \code{j}.
 }
 \description{
 This function simulates long-term antibody titre trajectories for dengue
  virus (DENV) infections, given an individual's infection history. Each
- infection produces a peak antibody titre that may be boosted by subsequent
- infections. The boost saturates asymptotically at a maximum fraction
- \code{phi} relative to the first infection peak, with the rate of saturation
- controlled by \code{beta}. Titres then decay exponentially from the peak
- using the corresponding decay rate.
+ infection raises the titre to a peak, from which it decays exponentially
+ until the next infection (or until \code{final_age} for the last
+ infection). Peak log2 titres saturate asymptotically towards \code{phi}
+ over successive infections, at a rate controlled by \code{beta}. Ages
+ before a subject's first infection are held at the seronegative baseline
+ titre of 5.
+}
+\details{
+Titres are returned on the natural (dilution) scale, converted from log2
+ values as \code{10 * 2^(log2_titre - 1)}; a log2 titre of 0 therefore
+ corresponds to a titre of 5.
 }
 \examples{
-inf_time_list <- replicate(c(5, 7, 10, 15), n = 2)
+inf_time_list <- replicate(2, c(5L, 7L, 10L, 15L), simplify = FALSE)
 simulate_DENV_long_decay_titres(inf_time_list,
                                 decay_rate_vec = c(0.08, 0.04, 0.02, 0.01),
                                 log_first_peak = 1.3,

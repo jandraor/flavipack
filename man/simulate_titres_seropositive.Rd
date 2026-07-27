@@ -52,8 +52,8 @@ simulate_titres_seropositive(
   sampling_times  = c(41, 74, 122, 157, 290, 468, 787, 1192, 1553),
   age             = 10,
   subject_id      = 3,
-  treatment_group = 0,
-  perm_rise       = 6,
-  temp_rise       = 2,
+  peaks           = c(6, 6, 6),
+  perm_rises      = c(2, 2, 2),
+  decays          = c(0.01, 0.01, 0.01),
   meas_sd         = 0)
 }

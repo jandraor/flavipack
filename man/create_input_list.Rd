@@ -4,21 +4,35 @@
 \alias{create_input_list}
 \title{Create a subject-level input list from multiple data frames}
 \usage{
-create_input_list(part_df, titre_df, symp_df, vacc_df = NULL, n_markers)
+create_input_list(
+  part_df,
+  titre_df,
+  symp_df,
+  vacc_df = NULL,
+  guess_df = NULL,
+  n_markers
+)
 }
 \arguments{
 \item{part_df}{A data frame containing participant-level information.
 Must include the columns \code{subject_id}, \code{age_enrolment},
 \code{location}, and \code{serostatus}.}
 
-\item{titre_df}{A data frame containing titre measurements with at least
-\code{subject_id}, \code{time}, and \code{meas} columns.}
+\item{titre_df}{A data frame containing titre measurements. Must include the
+columns \code{subject_id}, \code{time}, \code{meas}, and \code{marker}.}
 
 \item{symp_df}{A data frame containing symptom (e.g., infection) times with
-columns \code{subject_id} and \code{time}.}
+columns \code{subject_id} and \code{time}. Times after a subject's last
+titre observation are dropped.}
 
-\item{vacc_df}{An optional data frame containing vaccination times with
-columns \code{subject_id} and \code{time}. Defaults to \code{NULL}.}
+\item{vacc_df}{An optional data frame containing vaccination records with
+columns \code{subject_id}, \code{time}, and \code{baseline_titre}.
+Defaults to \code{NULL}. Times more than one time unit after a subject's
+last titre observation are dropped.}
+
+\item{guess_df}{An optional data frame of initial guesses for infection
+times, with columns \code{subject_id} and \code{time}. Defaults to
+\code{NULL}.}
 
 \item{n_markers}{An integer specifying the number of markers. (Currently
 unused but retained for compatibility or future extensions.)}
@@ -27,21 +41,29 @@ unused but retained for compatibility or future extensions.)}
 A list where each element corresponds to a subject. Each subject is
   represented as a list with the following components:
   \describe{
-    \item{subject_id}{Unique subject identifier}
+    \item{subject_id}{Unique subject identifier, coerced to character}
     \item{age_enrolment}{Age at enrolment}
     \item{location}{Subject location}
     \item{serostatus}{Baseline serostatus}
-    \item{obs_times}{Vector of observation times from \code{titre_df}}
-    \item{measurements}{List containing measurement vectors}
-    \item{infection_times}{(Optional) Sorted vector of infection times}
-    \item{vaccination_times}{(Optional) Sorted vector of vaccination times}
+    \item{obs_times}{List of unique observation times from \code{titre_df}}
+    \item{measurements}{Named list with one element per level of
+      \code{marker}, each a vector of measurements for that marker}
+    \item{infection_times}{(Optional) Sorted list of infection times, present
+      only if \code{symp_df} contains times within the subject's follow-up}
+    \item{vaccination}{(Optional) List of vaccination records, each a list
+      with elements \code{time} and \code{baseline_titre}. Present only if
+      \code{vacc_df} is supplied and contains rows for the subject}
+    \item{guessed_infections}{(Optional) Sorted list of guessed infection
+      times. Present only if \code{guess_df} is supplied and contains rows
+      for the subject}
   }
 }
 \description{
 This function constructs a list of subject-specific inputs by combining
-participant metadata, titre measurements, symptom (infection) times,
-and optional vaccination data. Each subject is returned as a list element
-containing their longitudinal measurements and associated covariates.
+participant metadata, titre measurements, symptom (infection) times, and
+optional vaccination and guessed-infection data. Each subject is returned as
+a list element containing their longitudinal measurements and associated
+covariates.
 }
 \examples{
 part_df <- data.frame(
@@ -54,7 +76,8 @@ part_df <- data.frame(
 titre_df <- data.frame(
   subject_id = c(1, 1, 2),
   time = c(0, 1, 0),
-  meas = c(10, 20, 15)
+  meas = c(10, 20, 15),
+  marker = "mean"
 )
 
 symp_df <- data.frame(
@@ -62,6 +85,6 @@ symp_df <- data.frame(
   time = c(0.5)
 )
 
-create_input_list(part_df, titre_df, symp_df)
+create_input_list(part_df, titre_df, symp_df, n_markers = 1)
 
 }

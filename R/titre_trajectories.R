@@ -34,7 +34,6 @@
 #' sampling_times <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
 #' simulate_titre_trajectory(
 #'   sampling_times  = sampling_times,
-#'   treatment_group = 0,
 #'   subject_id      = 1,
 #'   exposure_times  = c(300, 900),
 #'   peaks           = c(8, 8),
@@ -110,9 +109,9 @@ simulate_titre_trajectory <- function(sampling_times,
 #' @examples
 #' set.seed(123)
 #' true <- c(5, 10, 2, 1)
-#' simulate_titre_observation(true_titre = true,
-#'                            measurement_error = 1.5,
-#'                            LOD = 1)
+#' simulate_observed_titres(true_titre = true,
+#'                          measurement_error = 1.5,
+#'                          LOD = 1)
 #'
 #' @export
 simulate_observed_titres <- function(true_titre, measurement_error, LOD)
@@ -160,7 +159,6 @@ simulate_observed_titres <- function(true_titre, measurement_error, LOD)
 #'   perm_rises      = c(4, 3.5),
 #'   decays          = c(0.003, 0.002),
 #'   baseline        = 2,
-#'   treatment_group = 0,
 #'   exposure_times = c(300, 900)
 #' )
 simulate_true_titre_DENV <- function(sampling_times,
@@ -215,16 +213,18 @@ simulate_true_titre_DENV <- function(sampling_times,
 #'   sampling_times  = c(41, 74, 122, 157, 290, 468, 787, 1192, 1553),
 #'   age             = 10,
 #'   subject_id      = 3,
-#'   treatment_group = 0,
-#'   perm_rise       = 6,
-#'   temp_rise       = 2,
+#'   peaks           = c(6, 6, 6),
+#'   perm_rises      = c(2, 2, 2),
+#'   decays          = c(0.01, 0.01, 0.01),
 #'   meas_sd         = 0)
-simulate_titres_seropositive <- function(inf_times_sbs, sampling_times, age,
-                                        subject_id,
-                                        peaks,
-                                        perm_rises,
-                                        decays,
-                                        meas_sd) {
+simulate_titres_seropositive <- function(inf_times_sbs,
+                                         sampling_times,
+                                         age,
+                                         subject_id,
+                                         peaks,
+                                         perm_rises,
+                                         decays,
+                                         meas_sd) {
   # We assume that the first blood drawn was taken on the individual's birthday
   sampling_times_rel_to_last_birthday <- sampling_times - min(sampling_times)
 

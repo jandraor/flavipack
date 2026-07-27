@@ -60,7 +60,6 @@ with measurement error and a limit of detection.
 sampling_times <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
 simulate_titre_trajectory(
   sampling_times  = sampling_times,
-  treatment_group = 0,
   subject_id      = 1,
   exposure_times  = c(300, 900),
   peaks           = c(8, 8),

@@ -31,8 +31,8 @@ Any value less than `LOD` is returned as 0, mimicking assay detection limits.
 \examples{
 set.seed(123)
 true <- c(5, 10, 2, 1)
-simulate_titre_observation(true_titre = true,
-                           measurement_error = 1.5,
-                           LOD = 1)
+simulate_observed_titres(true_titre = true,
+                         measurement_error = 1.5,
+                         LOD = 1)
 
 }
