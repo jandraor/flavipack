@@ -2,9 +2,9 @@
 #'
 #' This function constructs a list of subject-specific inputs by combining
 #' participant metadata, titre measurements, symptom (infection) times, and
-#' optional vaccination and guessed-infection data. Each subject is returned as
-#' a list element containing their longitudinal measurements and associated
-#' covariates.
+#' optional vaccination, guessed-infection and flicked-infection data. Each
+#' subject is returned as a list element containing their longitudinal
+#' measurements and associated covariates.
 #'
 #' @param part_df A data frame containing participant-level information.
 #'   Must include the columns \code{subject_id}, \code{age_enrolment},
@@ -23,6 +23,11 @@
 #'   \code{NULL}.
 #' @param n_markers An integer specifying the number of markers. (Currently
 #'   unused but retained for compatibility or future extensions.)
+#' @param flick_df An optional data frame of infection times to flick, with
+#'   columns \code{subject_id} and \code{time}. Defaults to \code{NULL}. Each
+#'   flick time must match one of the subject's retained symptomatic infection
+#'   times; an error is raised otherwise, or if a subject has no retained
+#'   infections at all.
 #'
 #' @return A list where each element corresponds to a subject. Each subject is
 #'   represented as a list with the following components:
@@ -42,6 +47,8 @@
 #'     \item{guessed_infections}{(Optional) Sorted list of guessed infection
 #'       times. Present only if \code{guess_df} is supplied and contains rows
 #'       for the subject}
+#'     \item{flicks}{(Optional) Sorted list of flicked infection times. Present
+#'       only if \code{flick_df} is supplied and contains rows for the subject}
 #'   }
 #'
 #' @examples
@@ -70,7 +77,8 @@
 create_input_list <- function(part_df, titre_df, symp_df,
                               vacc_df = NULL,
                               guess_df = NULL,
-                              n_markers)
+                              n_markers,
+                              flick_df = NULL)
 {
   #----checks-------------------------------------------------------------------
   required_cols <- c("subject_id", "age_enrolment", "location", "serostatus")
@@ -142,6 +150,22 @@ create_input_list <- function(part_df, titre_df, symp_df,
 
     if(!is.null(guess_df)) obj <- add_guessed_infections(obj, guess_df, s_id)
 
+    if(!is.null(flick_df))
+    {
+      subject_flick_df <- flick_df[flick_df$subject_id == s_id, , drop = FALSE]
+
+      if(nrow(subject_flick_df) > 0)
+      {
+        if(!nrow(subject_symp) > 0)
+        {
+          stop(paste0("Subject id: ", s_id,
+                      ". There are no infections to flick"), call. = FALSE)
+        }
+
+        obj <- add_flicked_infections(obj, flick_df, s_id, subject_symp)
+      }
+    }
+
 
     obj
   })
@@ -174,6 +198,28 @@ add_guessed_infections <- function(obj, guess_df, s_id)
   if(nrow(subject_guess_df) > 0)
   {
     obj$guessed_infections <- I(as.list(sort(subject_guess_df$time)))
+  }
+
+  obj
+}
+
+add_flicked_infections <- function(obj, flick_df, s_id, subject_symp)
+{
+  subject_flick_df <- flick_df[flick_df$subject_id == s_id, , drop = FALSE]
+
+  if(nrow(subject_flick_df) > 0)
+  {
+    invalid <- setdiff(subject_flick_df$time, subject_symp$time)
+
+    if (length(invalid) > 0)
+    {
+      stop(paste0("Subject id: ", s_id,
+                  ". Infections to flick don't correspond to symp infections: ",
+                  paste(invalid, collapse = ", ")),
+           call. = FALSE)
+    }
+
+    obj$flicks <- I(as.list(sort(subject_flick_df$time)))
   }
 
   obj

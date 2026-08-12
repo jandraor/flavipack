@@ -10,7 +10,8 @@ create_input_list(
   symp_df,
   vacc_df = NULL,
   guess_df = NULL,
-  n_markers
+  n_markers,
+  flick_df = NULL
 )
 }
 \arguments{
@@ -36,6 +37,12 @@ times, with columns \code{subject_id} and \code{time}. Defaults to
 
 \item{n_markers}{An integer specifying the number of markers. (Currently
 unused but retained for compatibility or future extensions.)}
+
+\item{flick_df}{An optional data frame of infection times to flick, with
+columns \code{subject_id} and \code{time}. Defaults to \code{NULL}. Each
+flick time must match one of the subject's retained symptomatic infection
+times; an error is raised otherwise, or if a subject has no retained
+infections at all.}
 }
 \value{
 A list where each element corresponds to a subject. Each subject is
@@ -56,14 +63,16 @@ A list where each element corresponds to a subject. Each subject is
     \item{guessed_infections}{(Optional) Sorted list of guessed infection
       times. Present only if \code{guess_df} is supplied and contains rows
       for the subject}
+    \item{flicks}{(Optional) Sorted list of flicked infection times. Present
+      only if \code{flick_df} is supplied and contains rows for the subject}
   }
 }
 \description{
 This function constructs a list of subject-specific inputs by combining
 participant metadata, titre measurements, symptom (infection) times, and
-optional vaccination and guessed-infection data. Each subject is returned as
-a list element containing their longitudinal measurements and associated
-covariates.
+optional vaccination, guessed-infection and flicked-infection data. Each
+subject is returned as a list element containing their longitudinal
+measurements and associated covariates.
 }
 \examples{
 part_df <- data.frame(

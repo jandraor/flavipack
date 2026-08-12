@@ -272,27 +272,8 @@ test_that("create_input_list() handles multiple markers",
   expect_equal(actual, expected)
 })
 
-test_that("create_measurement_object() works",
-{
-  subject_titre_df <- data.frame(subject_id = 1,
-                                 time       = c(20),
-                                 meas       = c(2, 2.5, 1.5, 2),
-                                 marker     = c("D1", "D2", "D3", "D4"))
+test_that("create_input_list() handle starting infections", {
 
-  actual <- create_measurement_object(subject_titre_df)
-
-  expected <- list(
-    "D1" = I(c(2)),
-    "D2" = I(c(2.5)),
-    "D3" = I(c(1.5)),
-    "D4" = I(c(2))
-  )
-
-  expect_equal(actual, expected)
-})
-
-test_that("create_input_list() handle starting infections",
-{
   part_df <- data.frame(subject_id    = 1,
                         age_enrolment = 10,
                         location      = "COL",
@@ -331,3 +312,132 @@ test_that("create_input_list() handle starting infections",
 
   expect_equal(actual, expected)
 })
+
+test_that("create_input_list() handle symptomatic infections with flicks", {
+
+  part_df <- data.frame(subject_id    = 1,
+                        age_enrolment = 10,
+                        location      = "COL",
+                        serostatus    = TRUE)
+
+  titre_df <- data.frame(subject_id = 1,
+                         time       = c(20),
+                         meas       = c(2),
+                         marker     = "mean")
+
+  symp_df <- data.frame(subject_id = 1,
+                        time = c(11, 15))
+
+  guess_df <- data.frame(subject_id = 1,
+                         time       = 1)
+
+  flick_df <- data.frame(subject_id = 1,
+                         time       = 15)
+
+  actual <- create_input_list(part_df  = part_df,
+                              titre_df = titre_df,
+                              symp_df  = symp_df,
+                              n_markers = 1,
+                              guess_df = guess_df,
+                              flick_df = flick_df)
+
+  expected <- list(
+    list(subject_id       = "1",
+         age_enrolment    = 10,
+         location         = "COL",
+         serostatus       = TRUE,
+         obs_times        = I(list(20)),
+         measurements     = list(
+           "mean" = I(c(2))
+         ),
+         infection_times    = I(list(11, 15)),
+         guessed_infections = I(list(1)),
+         flicks             = I(list(15))
+    )
+  )
+
+  expect_equal(actual, expected)
+
+  flick_df <- data.frame(subject_id = 1,
+                         time       = 16)
+
+  expect_error(
+    create_input_list(
+      part_df   = part_df,
+      titre_df  = titre_df,
+      symp_df   = symp_df,
+      n_markers = 1,
+      guess_df  = guess_df,
+      flick_df  = flick_df)
+  )
+})
+
+test_that("create_input_list() handle symptomatic infections with flicks", {
+
+  part_df <- data.frame(subject_id    = c(1, 10),
+                        age_enrolment = c(5, 10),
+                        location      = c("COL", "LKA"),
+                        serostatus    = c(TRUE, TRUE))
+
+  titre_df <- data.frame(subject_id = c(1, 10),
+                         time       = c(20, 20),
+                         meas       = c(2, 2),
+                         marker     = c("mean", "mean"))
+
+  symp_df <- data.frame(subject_id = 10,
+                        time       = 15)
+
+  flick_df <- data.frame(subject_id = 10,
+                         time       = 15)
+
+  actual <- create_input_list(part_df  = part_df,
+                              titre_df = titre_df,
+                              symp_df  = symp_df,
+                              n_markers = 1,
+                              flick_df = flick_df)
+
+  expected <- list(
+    list(subject_id       = "1",
+         age_enrolment    = 5,
+         location         = "COL",
+         serostatus       = TRUE,
+         obs_times        = I(list(20)),
+         measurements     = list(
+           "mean" = I(c(2))
+         )),
+    list(subject_id       = "10",
+         age_enrolment    = 10,
+         location         = "LKA",
+         serostatus       = TRUE,
+         obs_times        = I(list(20)),
+         measurements     = list(
+           "mean" = I(c(2))
+         ),
+         infection_times    = I(list(15)),
+         flicks             = I(list(15))
+    )
+  )
+
+  expect_equal(actual, expected)
+})
+
+
+test_that("create_measurement_object() works",
+{
+  subject_titre_df <- data.frame(subject_id = 1,
+                                 time       = c(20),
+                                 meas       = c(2, 2.5, 1.5, 2),
+                                 marker     = c("D1", "D2", "D3", "D4"))
+
+  actual <- create_measurement_object(subject_titre_df)
+
+  expected <- list(
+    "D1" = I(c(2)),
+    "D2" = I(c(2.5)),
+    "D3" = I(c(1.5)),
+    "D4" = I(c(2))
+  )
+
+  expect_equal(actual, expected)
+})
+
