@@ -10,15 +10,15 @@ test_that("simulate_titre_trajectory() works", {
                                       peaks           = 3,
                                       perm_rises      = 1,
                                       decays          = 0.003,
-                                      baseline        = 0,
                                       meas_sd         = 0.3)
 
   expected <- data.frame(subject_id = subject_id,
                          time       = sampling_times,
+                         marker     = 0,
                          true       = c(rep(0, length(sampling_times) - 2),
                                         1.81340282, 1.25019146))
 
-  expect_equal(actual[, 1:3], expected)
+  expect_equal(actual[, 1:4], expected)
 
   expect_equal("meas" %in% colnames(actual), TRUE)
 
@@ -43,7 +43,6 @@ test_that("simulate_titre_trajectory() works", {
                                                           perm_rise_sec),
                                       decays          = c(temp_decay,
                                                           temp_decay),
-                                      baseline        = 0,
                                       meas_sd         = 0.3)
   titre_matrix <- matrix(0,
                          nrow = length(inf_times),
@@ -71,9 +70,10 @@ test_that("simulate_titre_trajectory() works", {
 
   expected <- data.frame(subject_id = subject_id,
                          time       = sampling_times,
+                         marker     = 0,
                          true       = true_titre)
 
-  expect_equal(actual[, 1:3], expected)
+  expect_equal(actual[, 1:4], expected)
 
   expect_equal("meas" %in% colnames(actual), TRUE)
 })
@@ -85,12 +85,12 @@ test_that("simulate_titre_trajectory() handles no infections",
   actual <- simulate_titre_trajectory(
     sampling_times  = sampling_times ,
     subject_id      = 1,
-    baseline        = 0,
     exposure_times  = numeric(0),
     meas_sd         = 0.3)
 
   expected <- data.frame(subject_id = 1,
                          time       = sampling_times,
+                         marker     = 0,
                          true       = 0,
                          meas       = 0)
 
@@ -111,7 +111,6 @@ test_that("simulate_true_titre() works",
   peak_sec <- 5
   perm_rise_sec <- 2
 
-
   temp_decay    <- 0.003
 
   actual <- simulate_true_titre_DENV(
@@ -122,7 +121,6 @@ test_that("simulate_true_titre() works",
                          perm_rise_sec),
     decays           = c(temp_decay,
                          temp_decay),
-    baseline         = 0,
     exposure_times   = inf_times)
 
   titre_matrix <- matrix(0,
@@ -149,7 +147,7 @@ test_that("simulate_true_titre() works",
 
   expected <- colSums(titre_matrix)
 
-  expect_equal(actual, expected)
+  expect_equal(actual, matrix(expected, nrow = 1))
 })
 
 test_that("simulate_true_titre_DENV() works",
@@ -161,48 +159,14 @@ test_that("simulate_true_titre_DENV() works",
     perm_rises = 5,
     peaks      = 5.9,
     decays     = 0.001,
-    baseline   = 0,
     exposure_times = 537)
 
   sim_times <- sampling_times - min(sampling_times)
 
   expected <- 5 + 0.9 * exp(-0.001 * sim_times)
 
-  expect_equal(actual, expected)
+  expect_equal(actual, matrix(expected, nrow = 1))
 })
-
-test_that("simulate_true_titre_DENV() adds the baseline",
-{
-  sampling_times <- c(100, 200, 300)
-
-  actual <- simulate_true_titre_DENV(sampling_times  = sampling_times,
-                                     peaks           = 6,
-                                     perm_rises      = 2,
-                                     decays          = 0.01,
-                                     baseline        = 3,
-                                     exposure_times  = 150)
-
-  expected <- c(3, 5 + 4 * exp(-0.01 * c(50, 150)))
-
-  expect_equal(actual, expected)
-})
-
-test_that("simulate_true_titre_DENV() returns the baseline with no infections",
-{
-  sampling_times <- c(100, 200, 300)
-
-  actual <- simulate_true_titre_DENV(sampling_times = sampling_times,
-                                     peaks           = numeric(0),
-                                     perm_rises      = numeric(0),
-                                     decays          = numeric(0),
-                                     baseline        = 3,
-                                     exposure_times = numeric(0))
-
-  expected <- c(3, 3, 3)
-
-  expect_equal(actual, expected)
-})
-
 
 #simulate_titres_seropositive---------------------------------------------------
 
@@ -276,9 +240,10 @@ test_that("simulate_titres_seropositive() works",
 
   expected <-  data.frame(subject_id = 3,
                           time       = sampling_times,
+                          marker     = 0,
                           true       = true_titre)
 
-  expect_equal(actual[, 1:3], expected)
+  expect_equal(actual[, 1:4], expected)
 
   expect_equal("meas" %in% colnames(actual), TRUE)
 })

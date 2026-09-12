@@ -86,6 +86,13 @@ create_input_list <- function(part_df, titre_df, symp_df,
 
   required_cols <- c("subject_id", "time", "meas", "marker")
   check_df_colnames(titre_df, required_cols)
+
+  if(nrow(symp_df) > 0)
+  {
+    required_cols <- c("subject_id", "time", "pathogen")
+    check_df_colnames(symp_df, required_cols)
+  }
+
   #-----------------------------------------------------------------------------
   subject_ids <- unique(part_df$subject_id)
 
@@ -120,7 +127,10 @@ create_input_list <- function(part_df, titre_df, symp_df,
 
       if (nrow(subject_symp) > 0)
       {
-        obj$infection_times <- I(as.list(sort(subject_symp$time)))
+        obj$infection_times <- lapply(order(subject_symp$time), \(i) {
+          list(time     = subject_symp$time[i],
+               pathogen = subject_symp$pathogen[i])
+        })
       }
     }
 

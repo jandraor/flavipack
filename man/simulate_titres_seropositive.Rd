@@ -2,7 +2,7 @@
 % Please edit documentation in R/titre_trajectories.R
 \name{simulate_titres_seropositive}
 \alias{simulate_titres_seropositive}
-\title{Simulate antibody titre trajectories from birth}
+\title{Simulate Antibody Titre Trajectories from Birth}
 \usage{
 simulate_titres_seropositive(
   inf_times_sbs,
@@ -12,18 +12,21 @@ simulate_titres_seropositive(
   peaks,
   perm_rises,
   decays,
-  meas_sd
+  meas_sd,
+  n_markers = 1,
+  infecting_pathogens = NULL,
+  titre_multipliers = list()
 )
 }
 \arguments{
-\item{inf_times_sbs}{Numeric vector of infection times (in days) relative to
-day the individual became susceptible.}
+\item{inf_times_sbs}{Numeric vector of infection times, in days relative to
+the day the individual became susceptible.}
 
 \item{sampling_times}{Numeric vector of sampling times, in days relative to
 the start of the study.}
 
-\item{age}{Numeric. Age of the individual at the time of the first sample
-(in years).}
+\item{age}{Numeric. Age of the individual at the time of the first sample,
+in years.}
 
 \item{subject_id}{Subject identifier.}
 
@@ -36,24 +39,48 @@ each exposure. Must have the same length as `exposure_times`.}
 \item{decays}{Numeric vector of decay rates. Must have the same length as
 `exposure_times`.}
 
-\item{meas_sd}{Non-negative numeric scalar. Standard deviation of the normal
-measurement model for log titres.}
+\item{meas_sd}{Numeric vector of standard deviations of the normal
+measurement model for log titres. Must contain one value per marker.}
+
+\item{n_markers}{Positive integer giving the number of antibody markers to
+simulate. Defaults to `1`.}
+
+\item{infecting_pathogens}{Integer vector identifying the infecting pathogen
+for each exposure. Pathogen indices are zero-based. Must have the same
+length as `exposure_times` when `n_markers > 1`. For a single-marker model,
+defaults to pathogen `0` for all exposures.}
+
+\item{titre_multipliers}{List of numeric vectors specifying the
+heterologous titre multipliers for each exposure. When `n_markers > 1`,
+each exposure must have `n_markers - 1` multipliers, ordered by marker
+index while excluding the infecting pathogen. Not used when
+`n_markers = 1`.}
 }
 \value{
-A data frame containing simulated titre values across the specified
- sampling times.
+A `data.frame` with one row per marker and sampling time, containing
+  the subject identifier, sampling time, marker, simulated true log-titre,
+  and simulated measured log-titre.
 }
 \description{
-Simulate antibody titre trajectories from birth
+Simulates true and measured antibody titre trajectories for a seropositive
+individual whose infection times are defined relative to the day they became
+susceptible. Sampling times are converted to the same time scale before
+simulating the antibody trajectories.
+}
+\details{
+Multiple antibody markers can be simulated, with homologous and
+heterologous responses determined by the infecting pathogen and
+exposure-specific titre multipliers.
 }
 \examples{
 simulate_titres_seropositive(
-  inf_times_sbs   = c(1059.646, 2743.543, 4152.091),
-  sampling_times  = c(41, 74, 122, 157, 290, 468, 787, 1192, 1553),
+  inf_times_sbs  = c(1059.646, 2743.543, 4152.091),
+  sampling_times = c(41, 74, 122, 157, 290, 468, 787, 1192, 1553),
   age             = 10,
   subject_id      = 3,
   peaks           = c(6, 6, 6),
   perm_rises      = c(2, 2, 2),
   decays          = c(0.01, 0.01, 0.01),
-  meas_sd         = 0)
+  meas_sd         = 0
+)
 }

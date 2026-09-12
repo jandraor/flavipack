@@ -10,10 +10,12 @@ simulate_titre_trajectory(
   peaks = NULL,
   perm_rises = NULL,
   decays = NULL,
-  baseline,
   meas_sd,
   exposure_times = NULL,
-  LOD = 1
+  LOD = 1,
+  n_markers = 1,
+  infecting_pathogens = NULL,
+  titre_multipliers = list()
 )
 }
 \arguments{
@@ -31,41 +33,57 @@ each exposure. Must have the same length as `exposure_times`.}
 \item{decays}{Numeric vector of decay rates. Must have the same length as
 `exposure_times`.}
 
-\item{baseline}{Numeric scalar baseline titre level added to all time points.}
-
-\item{meas_sd}{Non-negative numeric scalar. Standard deviation of the normal
-measurement model for log titres.}
+\item{meas_sd}{Numeric vector of standard deviations of the normal
+measurement model for log titres. Must contain one value per marker.}
 
 \item{exposure_times}{Numeric vector of exposure times relative to enrolment.
-Exposures refer to infections and vaccinations. Defaults to `NULL` if no exposures.}
+Exposures refer to infections and vaccinations. Defaults to `NULL` if
+there are no exposures.}
 
 \item{LOD}{Numeric scalar limit of detection.}
+
+\item{n_markers}{Positive integer giving the number of antibody markers to
+simulate. Defaults to `1`.}
+
+\item{infecting_pathogens}{Integer vector identifying the infecting pathogen
+for each exposure. Pathogen indices are zero-based. Must have the same
+length as `exposure_times` when `n_markers > 1`. For a single-marker model,
+defaults to pathogen `0` for all exposures.}
+
+\item{titre_multipliers}{List of numeric vectors specifying the
+heterologous titre multipliers for each exposure. When `n_markers > 1`,
+each exposure must have `n_markers - 1` multipliers, ordered by marker
+index while excluding the infecting pathogen. Not used when
+`n_markers = 1`.}
 }
 \value{
-A `data.frame` with columns:
+A `data.frame` with one row per marker and sampling time, with
+  columns:
 \describe{
   \item{subject_id}{Subject identifier.}
   \item{time}{Sampling time.}
+  \item{marker}{Zero-based antibody marker index.}
   \item{true}{Simulated true log-titre at each time.}
   \item{meas}{Observed log-titre with measurement error and LOD applied.}
 }
 }
 \description{
-Generates a simulated time course of true and measured antibody titres
-for an individual, given sampling times, and infection/vaccination events
-(exposures). The function applies a rise-and-decay model
-with measurement error and a limit of detection.
+Generates simulated time courses of true and measured antibody titres
+for an individual, given sampling times and infection/vaccination events
+(exposures). The function applies a rise-and-decay model with measurement
+error and a limit of detection. Multiple antibody markers can be simulated,
+with homologous and heterologous responses determined by the infecting
+pathogen and exposure-specific titre multipliers.
 }
 \examples{
 sampling_times <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
+
 simulate_titre_trajectory(
-  sampling_times  = sampling_times,
-  subject_id      = 1,
-  exposure_times  = c(300, 900),
-  peaks           = c(8, 8),
-  perm_rises      = c(6, 6),
-  decays          = c(0.003, 0.003),
-  baseline        = 0,
-  meas_sd         = 0.3
-)
+  sampling_times = sampling_times,
+  subject_id     = 1,
+  exposure_times = c(300, 900),
+  peaks          = c(8, 8),
+  perm_rises     = c(6, 6),
+  decays         = c(0.003, 0.003),
+  meas_sd        = 0.3)
 }

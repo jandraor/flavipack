@@ -2,15 +2,17 @@
 % Please edit documentation in R/titre_trajectories.R
 \name{simulate_true_titre_DENV}
 \alias{simulate_true_titre_DENV}
-\title{Simulate true log antibody titres for DENV}
+\title{Simulate True Log Antibody Titres for DENV}
 \usage{
 simulate_true_titre_DENV(
   sampling_times,
   peaks,
   perm_rises,
   decays,
-  baseline,
-  exposure_times = NULL
+  exposure_times = NULL,
+  n_markers = 1,
+  infecting_pathogens = NULL,
+  titre_multipliers = list()
 )
 }
 \arguments{
@@ -26,42 +28,57 @@ each exposure. Must have the same length as `exposure_times`.}
 \item{decays}{Numeric vector of decay rates. Must have the same length as
 `exposure_times`.}
 
-\item{baseline}{Numeric scalar baseline titre level added to all time points.}
-
 \item{exposure_times}{Numeric vector of exposure times relative to enrolment.
-Exposures refer to infections and vaccinations. Defaults to `NULL` if no exposures.}
+Exposures refer to infections and vaccinations. Defaults to `NULL` if
+there are no exposures.}
+
+\item{n_markers}{Positive integer giving the number of antibody markers to
+simulate. Defaults to `1`.}
+
+\item{infecting_pathogens}{Integer vector identifying the infecting pathogen
+for each exposure. Pathogen indices are zero-based. Must have the same
+length as `exposure_times` when `n_markers > 1`. For a single-marker model,
+defaults to pathogen `0` for all exposures.}
+
+\item{titre_multipliers}{List of numeric vectors specifying the
+heterologous titre multipliers for each exposure. When `n_markers > 1`,
+each exposure must have `n_markers - 1` multipliers, ordered by marker
+index while excluding the infecting pathogen. Not used when
+`n_markers = 1`.}
 }
 \value{
-A numeric vector of length equal to \code{sampling_times},
-containing simulated **true log antibody titre values**.
+A numeric matrix with \code{n_markers} rows and
+  \code{length(sampling_times)} columns. Rows correspond to antibody
+  markers and columns correspond to sampling times. Marker indices supplied
+  through \code{infecting_pathogens} are zero-based.
 }
 \description{
-This function generates simulated **true (noise-free)** log-transformed
-antibody titre values at specified sampling times, given infection events
-and immune response parameters.
+Generates simulated **true (noise-free)** log-transformed antibody titre
+values at specified sampling times, given exposure events and immune
+response parameters.
 }
 \details{
-It uses the same parameterisation as \code{\link{simulate_titre_trajectory}},
-but returns only the underlying true trajectory (no measurement error,
-no limit of detection).
+Each exposure generates a homologous response in the marker corresponding
+to the infecting pathogen. When multiple markers are simulated, the same
+exposure can also generate heterologous responses in the other markers,
+scaled by exposure-specific titre multipliers.
 
-Each infection contributes a rise that starts at a peak value and decays
+Each exposure contributes a rise that starts at a peak value and decays
 exponentially toward a permanent level:
 
 \deqn{titre(t) = perm\_rise + (peak - perm\_rise) * exp(-decay * t)}
 
-The total titre at each time point is the sum over all infections plus
-a baseline level.
+Contributions from multiple exposures are summed within each marker.
+Titres are zero before any contributing exposure.
 }
 \examples{
 sampling_times <- c(182, 210, 266, 294, 434, 643, 980, 1347, 1740)
 
 simulate_true_titre_DENV(
-  sampling_times  = sampling_times,
-  peaks           = c(8, 7),
-  perm_rises      = c(4, 3.5),
-  decays          = c(0.003, 0.002),
-  baseline        = 2,
+  sampling_times = sampling_times,
+  peaks          = c(8, 7),
+  perm_rises     = c(4, 3.5),
+  decays         = c(0.003, 0.002),
   exposure_times = c(300, 900)
 )
 }

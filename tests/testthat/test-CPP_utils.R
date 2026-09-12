@@ -11,7 +11,8 @@ test_that("create_input_list() works",
                          marker     = "mean")
 
   symp_df <- data.frame(subject_id = 1,
-                        time = c(11, 15))
+                        time       = c(11, 15),
+                        pathogen   = c(0, 3))
 
   actual <- create_input_list(part_df, titre_df, symp_df, n_markers = 1)
 
@@ -24,7 +25,15 @@ test_that("create_input_list() works",
          measurements     = list(
           "mean" = I(c(2))
          ),
-         infection_times  = I(list(11, 15))))
+         infection_times  =
+           list(
+             list(time     = 11,
+                  pathogen = 0),
+             list(time     = 15,
+                  pathogen = 3)
+           )
+         )
+    )
 
   expect_equal(actual, expected)
 })
@@ -42,7 +51,8 @@ test_that("create_input_list() works with multiple individuals",
                          marker     = "mean")
 
   symp_df <- data.frame(subject_id = 1,
-                        time = c(11, 15))
+                        time       = c(11, 15),
+                        pathogen   = c(0, 3))
 
   actual <- create_input_list(part_df, titre_df, symp_df, n_markers = 1)
 
@@ -53,8 +63,14 @@ test_that("create_input_list() works with multiple individuals",
          serostatus       = 1,
          obs_times        = I(list(5, 20)),
          measurements     = list("mean" = I(c(5, 6))),
-         infection_times  = I(list(11, 15))
-         ),
+         infection_times  =
+           list(
+             list(time     = 11,
+                  pathogen = 0),
+             list(time     = 15,
+                  pathogen = 3)
+           )
+    ),
     list(subject_id       = "10",
          age_enrolment    = 8,
          location         = "BRA",
@@ -80,7 +96,8 @@ test_that("create_input_list() works with vaccination",
                          marker     = "mean")
 
   symp_df <- data.frame(subject_id = 1,
-                        time = c(11, 15))
+                        time       = c(11, 15),
+                        pathogen   = c(0, 3))
 
   vacc_df <- data.frame(subject_id     = 20,
                         time           = 4.5,
@@ -96,8 +113,14 @@ test_that("create_input_list() works with vaccination",
          serostatus        = 1,
          obs_times         = I(list(5, 20)),
          measurements      = list("mean" = I(c(5, 6))),
-         infection_times   = I(list(11, 15))
-         ),
+         infection_times  =
+           list(
+             list(time     = 11,
+                  pathogen = 0),
+             list(time     = 15,
+                  pathogen = 3)
+           )
+    ),
     list(subject_id        = "10",
          age_enrolment     = 8,
          location          = "BRA",
@@ -133,7 +156,8 @@ test_that("create_input_list() works with multiple vaccinations",
                          marker     = "mean")
 
   symp_df <- data.frame(subject_id = 30,
-                        time = c(25, 35))
+                        time       = c(25, 35),
+                        pathogen   = c(0, 3))
 
   vacc_df <- data.frame(subject_id     = c(30, 30),
                         time           = c(5.5, 20.5),
@@ -149,12 +173,20 @@ test_that("create_input_list() works with multiple vaccinations",
          serostatus        = 1,
          obs_times         = I(list(5, 20, 30, 40)),
          measurements      = list("mean" = I(c(1, 2, 3, 4))),
-         infection_times   = I(list(25, 35)),
-         vaccination       = list(
-           list(time = 5.5,
-                baseline_titre = 1),
-           list(time           = 20.5,
-                baseline_titre = 2))
+         infection_times  =
+           list(
+             list(time     = 25,
+                  pathogen = 0),
+             list(time     = 35,
+                  pathogen = 3)
+           ),
+         vaccination       =
+           list(
+             list(time = 5.5,
+                  baseline_titre = 1),
+             list(time           = 20.5,
+                  baseline_titre = 2)
+           )
          )
     )
 
@@ -174,7 +206,8 @@ test_that("create_input_list() excludes exposures after dropout",
                          marker     = "mean")
 
   symp_df <- data.frame(subject_id = 12,
-                        time       = 16)
+                        time       = 16,
+                        pathogen   = 1)
 
   vacc_df <- data.frame(subject_id     = 12,
                         time           = 5.5,
@@ -250,7 +283,8 @@ test_that("create_input_list() handles multiple markers",
                          marker     = c("D1", "D2", "D3", "D4"))
 
   symp_df <- data.frame(subject_id = 1,
-                        time = c(11, 15))
+                        time       = c(11, 15),
+                        pathogen   = c(0, 3))
 
   actual <- create_input_list(part_df, titre_df, symp_df, n_markers = 4)
 
@@ -267,7 +301,15 @@ test_that("create_input_list() handles multiple markers",
              "D3" = I(c(1.5)),
              "D4" = I(c(2))
            ),
-         infection_times  = I(list(11, 15))))
+         infection_times  =
+           list(
+             list(time     = 11,
+                  pathogen = 0),
+             list(time     = 15,
+                  pathogen = 3)
+           )
+    )
+  )
 
   expect_equal(actual, expected)
 })
@@ -285,7 +327,8 @@ test_that("create_input_list() handle starting infections", {
                          marker     = "mean")
 
   symp_df <- data.frame(subject_id = 1,
-                        time = c(11, 15))
+                        time       = c(11, 15),
+                        pathogen   = c(0, 3))
 
   guess_df <- data.frame(subject_id = 1,
                          time       = 1)
@@ -305,7 +348,13 @@ test_that("create_input_list() handle starting infections", {
          measurements     = list(
            "mean" = I(c(2))
          ),
-         infection_times    = I(list(11, 15)),
+         infection_times  =
+           list(
+             list(time     = 11,
+                  pathogen = 0),
+             list(time     = 15,
+                  pathogen = 3)
+           ),
          guessed_infections = I(list(1))
     )
   )
@@ -326,7 +375,8 @@ test_that("create_input_list() handle symptomatic infections with flicks", {
                          marker     = "mean")
 
   symp_df <- data.frame(subject_id = 1,
-                        time = c(11, 15))
+                        time       = c(11, 15),
+                        pathogen   = c(0, 3))
 
   guess_df <- data.frame(subject_id = 1,
                          time       = 1)
@@ -350,7 +400,13 @@ test_that("create_input_list() handle symptomatic infections with flicks", {
          measurements     = list(
            "mean" = I(c(2))
          ),
-         infection_times    = I(list(11, 15)),
+         infection_times  =
+           list(
+             list(time     = 11,
+                  pathogen = 0),
+             list(time     = 15,
+                  pathogen = 3)
+           ),
          guessed_infections = I(list(1)),
          flicks             = I(list(15))
     )
@@ -385,7 +441,8 @@ test_that("create_input_list() handle symptomatic infections with flicks", {
                          marker     = c("mean", "mean"))
 
   symp_df <- data.frame(subject_id = 10,
-                        time       = 15)
+                        time       = 15,
+                        pathogen   = 0)
 
   flick_df <- data.frame(subject_id = 10,
                          time       = 15)
@@ -413,7 +470,11 @@ test_that("create_input_list() handle symptomatic infections with flicks", {
          measurements     = list(
            "mean" = I(c(2))
          ),
-         infection_times    = I(list(15)),
+         infection_times  =
+           list(
+             list(time     = 15,
+                  pathogen = 0)
+           ),
          flicks             = I(list(15))
     )
   )

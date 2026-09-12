@@ -14,8 +14,6 @@ simulate_infection_times_since_susceptibility(
 )
 }
 \arguments{
-\item{lambda}{A scalar corresponding to the annual force of infection.}
-
 \item{age_enrolment}{Numeric. Age of the individual at study enrolment, in years.}
 
 \item{enrolment_time}{Numeric. Time from the start of the study to this
@@ -23,13 +21,6 @@ individual's enrolment, in days.}
 
 \item{follow_up_time}{Numeric. Time from the start of the study to the
 individual's last measurement, in days.}
-
-\item{min_gap}{A scalar representing the minimum time that must elapse
-between two consecutive infections. This interval is due to temporary
-immune protection.}
-
-\item{max_inf}{An integer indicating the maximum number of infections that
-an individual can experience from a given pathogen.}
 }
 \value{
 Numeric vector of infection times, in days since becoming susceptible
